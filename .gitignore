@@ -52,4 +52,10 @@ MoPubSwiftSampleApp/
 /Pods
 AdNetworkSupport/InMobi/
 Jenkinsfile
-Canary
+
+# Canary app
+# Should not publicly distribute the interal folder (containing the internal testing files)
+# and CocoaPod files.
+Canary/Internal
+Canary/Podfile.lock
+Canary/Pods
