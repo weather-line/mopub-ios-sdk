@@ -1,8 +1,9 @@
 //
 //  NSError+MPAdditions.h
-//  MoPubSDK
 //
-//  Copyright © 2018 MoPub. All rights reserved.
+//  Copyright 2018 Twitter, Inc.
+//  Licensed under the MoPub SDK License Agreement
+//  http://www.mopub.com/legal/sdk-license-agreement/
 //
 
 #import <Foundation/Foundation.h>
@@ -14,4 +15,13 @@
  */
 @property (nonatomic, readonly) BOOL isAdRequestTimedOutError;
 
+@end
+
+@interface NSError (Networking)
+/**
+ Networking error from an HTTP status code.
+ @param statusCode HTTP status code.
+ @return Error.
+ */
++ (NSError *)networkErrorWithHTTPStatusCode:(NSInteger)statusCode;
 @end

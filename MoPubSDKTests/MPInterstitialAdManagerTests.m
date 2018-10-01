@@ -1,15 +1,20 @@
 //
 //  MPInterstitialAdManagerTests.m
-//  MoPubSDKTests
 //
-//  Copyright © 2018 MoPub. All rights reserved.
+//  Copyright 2018 Twitter, Inc.
+//  Licensed under the MoPub SDK License Agreement
+//  http://www.mopub.com/legal/sdk-license-agreement/
 //
 
 #import <XCTest/XCTest.h>
 #import "MPAdConfigurationFactory.h"
+#import "MPAdTargeting.h"
 #import "MPInterstitialAdManager+Testing.h"
 #import "MPInterstitialAdManagerDelegateHandler.h"
+#import "MPInterstitialCustomEventAdapter.h"
+#import "MPInterstitialCustomEventAdapter+Testing.h"
 #import "MPMockAdServerCommunicator.h"
+#import "MPMockInterstitialCustomEvent.h"
 
 static const NSTimeInterval kDefaultTimeout = 10;
 
@@ -224,6 +229,49 @@ static const NSTimeInterval kDefaultTimeout = 10;
     XCTAssertTrue(communicator.numberOfBeforeLoadEventsFired == 2);
     XCTAssertTrue(communicator.numberOfAfterLoadEventsFired == 2);
     XCTAssert([communicator.lastUrlLoaded.absoluteString isEqualToString:@"http://ads.mopub.com/m/failURL"]);
+}
+
+#pragma mark - Local Extras
+
+- (void)testLocalExtrasInCustomEvent {
+    XCTestExpectation * expectation = [self expectationWithDescription:@"Wait for interstitial load"];
+
+    MPInterstitialAdManagerDelegateHandler * handler = [MPInterstitialAdManagerDelegateHandler new];
+    handler.didLoadAd = ^{
+        [expectation fulfill];
+    };
+    handler.didFailToLoadAd = ^(NSError * error) {
+        XCTFail(@"Encountered an unexpected load failure");
+        [expectation fulfill];
+    };
+
+    // Generate the ad configurations
+    MPAdConfiguration * interstitialThatShouldLoad = [MPAdConfigurationFactory defaultInterstitialConfigurationWithCustomEventClassName:@"MPMockInterstitialCustomEvent"];
+    NSArray * configurations = @[interstitialThatShouldLoad];
+
+    MPInterstitialAdManager * manager = [[MPInterstitialAdManager alloc] initWithDelegate:handler];
+    MPMockAdServerCommunicator * communicator = [[MPMockAdServerCommunicator alloc] initWithDelegate:manager];
+    communicator.mockConfigurationsResponse = configurations;
+    manager.communicator = communicator;
+
+    MPAdTargeting * targeting = [[MPAdTargeting alloc] init];
+    targeting.localExtras = @{ @"testing": @"YES" };
+    [manager loadInterstitialWithAdUnitID:@"TEST_ADUNIT_ID" targeting:targeting];
+
+    [self waitForExpectationsWithTimeout:kDefaultTimeout handler:^(NSError * _Nullable error) {
+        if (error != nil) {
+            XCTFail(@"Timed out");
+        }
+    }];
+
+    MPInterstitialCustomEventAdapter * adapter = (MPInterstitialCustomEventAdapter *)manager.adapter;
+    MPMockInterstitialCustomEvent * customEvent = (MPMockInterstitialCustomEvent *)adapter.interstitialCustomEvent;
+    XCTAssertNotNil(customEvent);
+
+    NSDictionary * localExtras = customEvent.localExtras;
+    XCTAssertNotNil(localExtras);
+    XCTAssert([localExtras[@"testing"] isEqualToString:@"YES"]);
+    XCTAssertTrue(customEvent.isLocalExtrasAvailableAtRequest);
 }
 
 @end

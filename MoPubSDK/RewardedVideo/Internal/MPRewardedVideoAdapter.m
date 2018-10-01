@@ -1,14 +1,16 @@
 //
 //  MPRewardedVideoAdapter.m
-//  MoPubSDK
 //
-//  Copyright (c) 2015 MoPub. All rights reserved.
+//  Copyright 2018 Twitter, Inc.
+//  Licensed under the MoPub SDK License Agreement
+//  http://www.mopub.com/legal/sdk-license-agreement/
 //
 
 #import "MPRewardedVideoAdapter.h"
 
 #import "MPAdConfiguration.h"
 #import "MPAdServerURLBuilder.h"
+#import "MPAdTargeting.h"
 #import "MPAnalyticsTracker.h"
 #import "MPCoreInstanceProvider.h"
 #import "MPError.h"
@@ -66,7 +68,7 @@ static const NSUInteger kExcessiveCustomDataLength = 8196;
     [[MPCoreInstanceProvider sharedProvider] keepObjectAliveForCurrentRunLoopIteration:_rewardedVideoCustomEvent];
 }
 
-- (void)getAdWithConfiguration:(MPAdConfiguration *)configuration
+- (void)getAdWithConfiguration:(MPAdConfiguration *)configuration targeting:(MPAdTargeting *)targeting
 {
     MPLogInfo(@"Looking for custom event class named %@.", configuration.customEventClass);
 
@@ -79,6 +81,7 @@ static const NSUInteger kExcessiveCustomDataLength = 8196;
         return;
     }
     customEvent.delegate = self;
+    customEvent.localExtras = targeting.localExtras;
 
     self.rewardedVideoCustomEvent = customEvent;
     [self startTimeoutTimer];

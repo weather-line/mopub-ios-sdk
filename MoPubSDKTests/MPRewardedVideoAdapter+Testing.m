@@ -1,8 +1,9 @@
 //
 //  MPRewardedVideoAdapter+Testing.m
-//  MoPubSDK
 //
-//  Copyright © 2017 MoPub. All rights reserved.
+//  Copyright 2018 Twitter, Inc.
+//  Licensed under the MoPub SDK License Agreement
+//  http://www.mopub.com/legal/sdk-license-agreement/
 //
 
 #import "MPRewardedVideoAdapter+Testing.h"
@@ -16,6 +17,7 @@
 @dynamic hasTrackedImpression;
 @dynamic hasExpired;
 @dynamic customData;
+@dynamic rewardedVideoCustomEvent;
 @end
 
 #pragma clang diagnostic pop

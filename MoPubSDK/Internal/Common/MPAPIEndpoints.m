@@ -1,8 +1,9 @@
 //
 //  MPAPIEndpoints.m
-//  MoPub
 //
-//  Copyright (c) 2015 MoPub. All rights reserved.
+//  Copyright 2018 Twitter, Inc.
+//  Licensed under the MoPub SDK License Agreement
+//  http://www.mopub.com/legal/sdk-license-agreement/
 //
 
 #import "MPAPIEndpoints.h"
@@ -13,29 +14,50 @@
 static NSString * const kUrlSchemeHttp = @"http";
 static NSString * const kUrlSchemeHttps = @"https";
 
+// Base URL constant
+static NSString * const kMoPubBaseHostname = @"ads.mopub.com";
+
 @implementation MPAPIEndpoints
 
-static BOOL sUsesHTTPS = YES;
+#pragma mark - baseHostname property
 
+static NSString * _baseHostname = nil;
++ (void)setBaseHostname:(NSString *)baseHostname {
+    _baseHostname = baseHostname;
+}
+
++ (NSString *)baseHostname {
+    if (_baseHostname == nil || [_baseHostname isEqualToString:@""]) {
+        return kMoPubBaseHostname;
+    }
+
+    return _baseHostname;
+}
+
+#pragma mark - setUsesHTTPS
+
+static BOOL sUsesHTTPS = YES;
 + (void)setUsesHTTPS:(BOOL)usesHTTPS
 {
     sUsesHTTPS = usesHTTPS;
 }
 
+#pragma mark - baseURL
+
 + (NSString *)baseURL
 {
     if ([[MPCoreInstanceProvider sharedProvider] appTransportSecuritySettings] == MPATSSettingEnabled) {
-        return [@"https://" stringByAppendingString:MOPUB_BASE_HOSTNAME];
+        return [@"https://" stringByAppendingString:self.baseHostname];
     }
 
-    return [@"http://" stringByAppendingString:MOPUB_BASE_HOSTNAME];
+    return [@"http://" stringByAppendingString:self.baseHostname];
 }
 
 + (NSURLComponents *)baseURLComponentsWithPath:(NSString *)path
 {
     NSURLComponents * components = [[NSURLComponents alloc] init];
     components.scheme = (sUsesHTTPS ? kUrlSchemeHttps : kUrlSchemeHttp);
-    components.host = MOPUB_BASE_HOSTNAME;
+    components.host = self.baseHostname;
     components.path = path;
 
     return components;

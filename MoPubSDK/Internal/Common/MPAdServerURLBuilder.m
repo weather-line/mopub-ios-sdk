@@ -1,8 +1,9 @@
 //
 //  MPAdServerURLBuilder.m
-//  MoPub
 //
-//  Copyright (c) 2012 MoPub. All rights reserved.
+//  Copyright 2018 Twitter, Inc.
+//  Licensed under the MoPub SDK License Agreement
+//  http://www.mopub.com/legal/sdk-license-agreement/
 //
 
 #import "MPAdServerURLBuilder.h"
@@ -15,7 +16,7 @@
 #import "MPGeolocationProvider.h"
 #import "MPGlobal.h"
 #import "MPIdentityProvider.h"
-#import "MPCoreInstanceProvider.h"
+#import "MPCoreInstanceProvider+MRAID.h"
 #import "MPReachabilityManager.h"
 #import "MPAPIEndpoints.h"
 #import "MPViewabilityTracker.h"
@@ -231,7 +232,10 @@ static NSInteger const kAdSequenceNone = -1;
 
 + (NSString *)isMRAIDEnabledSDKValue
 {
-    return NSClassFromString(@"MPMRAIDBannerCustomEvent") != Nil && NSClassFromString(@"MPMRAIDInterstitialCustomEvent") != Nil ? @"1" : nil;
+    BOOL isMRAIDEnabled = [[MPCoreInstanceProvider sharedProvider] isMraidJavascriptAvailable] &&
+                          NSClassFromString(@"MPMRAIDBannerCustomEvent") != Nil &&
+                          NSClassFromString(@"MPMRAIDInterstitialCustomEvent") != Nil;
+    return isMRAIDEnabled ? @"1" : nil;
 }
 
 + (NSString *)connectionTypeValue

@@ -1,8 +1,9 @@
 //
 //  MPAdConfiguration.h
-//  MoPub
 //
-//  Copyright (c) 2012 MoPub, Inc. All rights reserved.
+//  Copyright 2018 Twitter, Inc.
+//  Licensed under the MoPub SDK License Agreement
+//  http://www.mopub.com/legal/sdk-license-agreement/
 //
 
 #import <Foundation/Foundation.h>
@@ -28,16 +29,16 @@ extern NSString * const kAdTypeMetadataKey;
 extern NSString * const kAdUnitWarmingUpMetadataKey;
 extern NSString * const kClickthroughMetadataKey;
 extern NSString * const kCreativeIdMetadataKey;
-extern NSString * const kCustomSelectorMetadataKey;
 extern NSString * const kCustomEventClassNameMetadataKey;
 extern NSString * const kCustomEventClassDataMetadataKey;
 extern NSString * const kNextUrlMetadataKey;
 extern NSString * const kBeforeLoadUrlMetadataKey;
 extern NSString * const kAfterLoadUrlMetadataKey;
+extern NSString * const kAfterLoadSuccessUrlMetadataKey;
+extern NSString * const kAfterLoadFailureUrlMetadataKey;
 extern NSString * const kHeightMetadataKey;
 extern NSString * const kImpressionTrackerMetadataKey;
 extern NSString * const kImpressionTrackersMetadataKey;
-extern NSString * const kLaunchpageMetadataKey;
 extern NSString * const kNativeSDKParametersMetadataKey;
 extern NSString * const kNetworkTypeMetadataKey;
 extern NSString * const kRefreshTimeMetadataKey;
@@ -83,12 +84,10 @@ extern NSString * const kBannerImpressionMinPixelMetadataKey;
 @property (nonatomic, strong) NSArray<NSURL *> * impressionTrackingURLs;
 @property (nonatomic, strong) NSURL *nextURL;
 @property (nonatomic, strong) NSURL *beforeLoadURL;
-@property (nonatomic, strong) NSURL *interceptURLPrefix;
 @property (nonatomic, assign) NSTimeInterval refreshInterval;
 @property (nonatomic, assign) NSTimeInterval adTimeoutInterval;
 @property (nonatomic, copy) NSData *adResponseData;
 @property (nonatomic, strong) NSDictionary *nativeSDKParameters;
-@property (nonatomic, copy) NSString *customSelectorName;
 @property (nonatomic, assign) Class customEventClass;
 @property (nonatomic, strong) NSDictionary *customEventClassData;
 @property (nonatomic, assign) MPInterstitialOrientationType orientationType;
@@ -112,7 +111,6 @@ extern NSString * const kBannerImpressionMinPixelMetadataKey;
 @property (nonatomic, assign) BOOL rewardedPlayableShouldRewardOnClick;
 @property (nonatomic, copy) NSString *advancedBidPayload;
 
-
 // viewable impression tracking experiment
 @property (nonatomic) NSTimeInterval impressionMinVisibleTimeInSec;
 @property (nonatomic) CGFloat impressionMinVisiblePixels;
@@ -122,7 +120,6 @@ extern NSString * const kBannerImpressionMinPixelMetadataKey;
 
 - (BOOL)hasPreferredSize;
 - (NSString *)adResponseHTMLString;
-- (NSString *)clickDetectionURLPrefix;
-- (NSURL *)afterLoadUrlWithLoadDuration:(NSTimeInterval)duration loadResult:(MPAfterLoadResult)result;
+- (NSArray <NSURL *> *)afterLoadUrlsWithLoadDuration:(NSTimeInterval)duration loadResult:(MPAfterLoadResult)result;
 
 @end

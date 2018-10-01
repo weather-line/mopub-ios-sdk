@@ -1,8 +1,9 @@
 //
 //  MPURLRequest.m
-//  MoPubSDK
 //
-//  Copyright © 2018 MoPub. All rights reserved.
+//  Copyright 2018 Twitter, Inc.
+//  Licensed under the MoPub SDK License Agreement
+//  http://www.mopub.com/legal/sdk-license-agreement/
 //
 
 #import "MPURLRequest.h"
@@ -36,7 +37,7 @@ NS_ASSUME_NONNULL_BEGIN
 
     // Requests sent to MoPub should always be in POST format. All other requests
     // should be sent as a normal GET.
-    BOOL isMoPubRequest = [URL.host isEqualToString:MOPUB_BASE_HOSTNAME];
+    BOOL isMoPubRequest = [URL.host isEqualToString:MPAPIEndpoints.baseHostname];
     NSURL * requestUrl = URL;
     if (isMoPubRequest) {
         // Move the query parameters to the POST data dictionary.
@@ -67,7 +68,7 @@ NS_ASSUME_NONNULL_BEGIN
 
             // Generate the JSON body from the POST parameters
             NSError * error = nil;
-            NSData * jsonData = [NSJSONSerialization dataWithJSONObject:postData options:NSJSONWritingPrettyPrinted error:&error];
+            NSData * jsonData = [NSJSONSerialization dataWithJSONObject:postData options:0 error:&error];
 
             // Set the request body with the query parameter key/value pairs if there was no
             // error in generating a JSON from the dictionary.
@@ -99,17 +100,36 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 /**
+ Global variable for holding the user agent string
+ */
+NSString * gUserAgent = nil;
+
+/**
  Retrieves the current user agent as determined by @c UIWebView.
  @returns The user agent.
  */
 + (NSString *)userAgent {
-    static NSString * ua = nil;
+    if (gUserAgent == nil) {
+        // The user agent string cannot be obtained from a UIWebView unless on the
+        // main thread (there'll be a crash if you try to obtain on a thread other than main).
+        // Therefore, obtain the string on main thread and block this thread if needed to get it.
 
-    if (ua == nil) {
-        ua = [[[UIWebView alloc] init] stringByEvaluatingJavaScriptFromString:@"navigator.userAgent"];
+        // Make a block to obtain the user agent string
+        void (^obtainUserAgentBlock)(void) = ^void(void) {
+            // Only set @c gUserAgent on the main thread to avoid undefined behavior.
+            gUserAgent = [[[UIWebView alloc] init] stringByEvaluatingJavaScriptFromString:@"navigator.userAgent"];
+        };
+
+        if ([NSThread isMainThread]) {
+            // Run the block directly if on main thread.
+            obtainUserAgentBlock();
+        } else {
+            // Block this thread to obtain user agent string on main thread.
+            dispatch_sync(dispatch_get_main_queue(), obtainUserAgentBlock);
+        }
     }
 
-    return ua;
+    return gUserAgent;
 }
 
 @end

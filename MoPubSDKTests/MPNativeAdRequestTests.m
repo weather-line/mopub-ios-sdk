@@ -1,8 +1,9 @@
 //
 //  MPNativeAdRequestTests.m
-//  MoPubSDK
 //
-//  Copyright © 2017 MoPub. All rights reserved.
+//  Copyright 2018 Twitter, Inc.
+//  Licensed under the MoPub SDK License Agreement
+//  http://www.mopub.com/legal/sdk-license-agreement/
 //
 
 #import <XCTest/XCTest.h>
@@ -12,6 +13,7 @@
 #import "MPError.h"
 #import "MPNativeAdRequest.h"
 #import "MPNativeAdRequest+Testing.h"
+#import "MPNativeAdRequestTargeting.h"
 #import "MPMockAdServerCommunicator.h"
 #import "MPMockNativeCustomEvent.h"
 #import "MPStaticNativeAdRenderer.h"
@@ -39,6 +41,7 @@ static const NSTimeInterval kTestTimeout   = 2; // seconds
         MPNativeAdRendererConfiguration * rendererConfig = [MPStaticNativeAdRenderer rendererConfigurationWithRendererSettings:settings];
         NSMutableArray * supportedCustomEvents = [[NSMutableArray alloc] initWithArray:rendererConfig.supportedCustomEvents];
         [supportedCustomEvents addObject:@"MPMockNativeCustomEvent"];
+        [supportedCustomEvents addObject:@"MPMockLongLoadNativeCustomEvent"];
         rendererConfig.supportedCustomEvents = supportedCustomEvents;
 
         @[rendererConfig];
@@ -287,6 +290,93 @@ static const NSTimeInterval kTestTimeout   = 2; // seconds
 
     // Verify error was timeout
     XCTAssertTrue(communicator.lastAfterLoadResultWasTimeout);
+}
+
+- (void)testConsecutiveNativeAdRequestsDoNotTimeOut {
+    XCTestExpectation * expectation = [self expectationWithDescription:@"Wait for first request timeout"];
+
+    // Generate the ad configurations
+    MPAdConfiguration * config = [MPAdConfigurationFactory defaultNativeAdConfigurationWithCustomEventClassName:@"MPMockLongLoadNativeCustomEvent" additionalMetadata:@{kNextUrlMetadataKey: @""}];
+
+    // Generate ad request
+    MPNativeAdRequest * nativeAdRequest = [MPNativeAdRequest requestWithAdUnitIdentifier:@"FAKE_AD_UNIT_ID" rendererConfigurations:self.rendererConfigurations];
+
+    MPMockAdServerCommunicator * communicator = [[MPMockAdServerCommunicator alloc] initWithDelegate:nativeAdRequest];
+    communicator.mockConfigurationsResponse = @[config];
+    communicator.loadMockResponsesOnce = YES;
+
+    nativeAdRequest.communicator = communicator;
+    [nativeAdRequest startWithCompletionHandler:^(MPNativeAdRequest *request, MPNativeAd *response, NSError *error) {
+        [expectation fulfill];
+    }];
+
+    [self waitForExpectationsWithTimeout:NATIVE_TIMEOUT_INTERVAL handler:^(NSError * _Nullable error) {
+        if (error != nil) {
+            XCTFail(@"Timed out");
+        }
+    }];
+
+    // Verify no timeout for first request
+    XCTAssertFalse(communicator.lastAfterLoadResultWasTimeout);
+
+    // Set up for next ad request
+    expectation = [self expectationWithDescription:@"Wait for second request timeout"];
+    communicator.mockConfigurationsResponse = @[config];
+
+    [nativeAdRequest startWithCompletionHandler:^(MPNativeAdRequest *request, MPNativeAd *response, NSError *error) {
+        [expectation fulfill];
+    }];
+
+    [self waitForExpectationsWithTimeout:NATIVE_TIMEOUT_INTERVAL handler:^(NSError * _Nullable error) {
+        if (error != nil) {
+            XCTFail(@"Timed out");
+        }
+    }];
+
+    // Verify no timeout for second request
+    XCTAssertFalse(communicator.lastAfterLoadResultWasTimeout);
+}
+
+#pragma mark - Local Extras
+
+- (void)testLocalExtrasInCustomEvent {
+    XCTestExpectation * expectation = [self expectationWithDescription:@"Wait for native load"];
+
+    // Generate the ad configurations
+    MPAdConfiguration * nativeAdThatShouldLoad = [MPAdConfigurationFactory defaultNativeAdConfigurationWithCustomEventClassName:@"MPMockNativeCustomEvent"];
+    NSArray * configurations = @[nativeAdThatShouldLoad];
+
+    // Generate ad request
+    MPNativeAdRequest * nativeAdRequest = [MPNativeAdRequest requestWithAdUnitIdentifier:@"FAKE_AD_UNIT_ID" rendererConfigurations:self.rendererConfigurations];
+    MPMockAdServerCommunicator * communicator = [[MPMockAdServerCommunicator alloc] initWithDelegate:nativeAdRequest];
+    communicator.mockConfigurationsResponse = configurations;
+    nativeAdRequest.communicator = communicator;
+
+    MPNativeAdRequestTargeting * targeting = [MPNativeAdRequestTargeting targeting];
+    targeting.localExtras = @{ @"testing": @"YES" };
+    nativeAdRequest.targeting = targeting;
+
+    [nativeAdRequest startWithCompletionHandler:^(MPNativeAdRequest *request, MPNativeAd *response, NSError *error) {
+        if (error != nil) {
+            XCTFail(@"Unexpected failure");
+        }
+
+        [expectation fulfill];
+    }];
+
+    [self waitForExpectationsWithTimeout:kTestTimeout handler:^(NSError * _Nullable error) {
+        if (error != nil) {
+            XCTFail(@"Timed out");
+        }
+    }];
+
+    MPMockNativeCustomEvent * customEvent = (MPMockNativeCustomEvent *)nativeAdRequest.nativeCustomEvent;
+    XCTAssertNotNil(customEvent);
+
+    NSDictionary * localExtras = customEvent.localExtras;
+    XCTAssertNotNil(localExtras);
+    XCTAssert([localExtras[@"testing"] isEqualToString:@"YES"]);
+    XCTAssertTrue(customEvent.isLocalExtrasAvailableAtRequest);
 }
 
 @end

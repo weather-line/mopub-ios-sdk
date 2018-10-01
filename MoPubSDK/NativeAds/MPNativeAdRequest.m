@@ -1,6 +1,9 @@
 //
 //  MPNativeAdRequest.m
-//  Copyright (c) 2013 MoPub. All rights reserved.
+//
+//  Copyright 2018 Twitter, Inc.
+//  Licensed under the MoPub SDK License Agreement
+//  http://www.mopub.com/legal/sdk-license-agreement/
 //
 
 #import "MPNativeAdRequest.h"
@@ -207,6 +210,7 @@ static NSString * const kNativeAdErrorDomain = @"com.mopub.NativeAd";
         return;
     }
     customEvent.delegate = self;
+    customEvent.localExtras = self.targeting.localExtras;
     self.nativeCustomEvent = customEvent;
 
     [self.nativeCustomEvent requestAdWithCustomEventInfo:configuration.customEventClassData adMarkup:configuration.advancedBidPayload];
@@ -224,6 +228,8 @@ static NSString * const kNativeAdErrorDomain = @"com.mopub.NativeAd";
 
 - (void)completeAdRequestWithAdObject:(MPNativeAd *)adObject error:(NSError *)error
 {
+    [self didStopLoading];
+
     self.loading = NO;
     self.remainingConfigurations = nil;
 
@@ -365,6 +371,11 @@ static NSString * const kNativeAdErrorDomain = @"com.mopub.NativeAd";
 {
     NSError * error = [MOPUBError errorWithCode:MOPUBErrorAdRequestTimedOut localizedDescription:@"Native ad request timed out"];
     [self nativeCustomEvent:self.nativeCustomEvent didFailToLoadAdWithError:error];
+}
+
+- (void)didStopLoading
+{
+    [self.timeoutTimer invalidate];
 }
 
 @end

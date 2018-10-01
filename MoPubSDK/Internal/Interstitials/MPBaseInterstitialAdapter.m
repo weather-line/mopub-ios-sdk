@@ -1,9 +1,9 @@
 //
 //  MPBaseInterstitialAdapter.m
-//  MoPub
 //
-//  Created by Nafis Jamal on 4/27/11.
-//  Copyright 2011 MoPub. All rights reserved.
+//  Copyright 2018 Twitter, Inc.
+//  Licensed under the MoPub SDK License Agreement
+//  http://www.mopub.com/legal/sdk-license-agreement/
 //
 
 #import "MPBaseInterstitialAdapter.h"
@@ -52,20 +52,18 @@
     self.delegate = nil;
 }
 
-- (void)getAdWithConfiguration:(MPAdConfiguration *)configuration
+- (void)getAdWithConfiguration:(MPAdConfiguration *)configuration targeting:(MPAdTargeting *)targeting
 {
     // To be implemented by subclasses.
     [self doesNotRecognizeSelector:_cmd];
 }
 
-- (void)_getAdWithConfiguration:(MPAdConfiguration *)configuration
+- (void)_getAdWithConfiguration:(MPAdConfiguration *)configuration targeting:(MPAdTargeting *)targeting
 {
     self.configuration = configuration;
 
     [self startTimeoutTimer];
-
-    MPBaseInterstitialAdapter *strongSelf = self;
-    [strongSelf getAdWithConfiguration:configuration];
+    [self getAdWithConfiguration:configuration targeting:targeting];
 }
 
 - (void)startTimeoutTimer

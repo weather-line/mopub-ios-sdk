@@ -1,14 +1,16 @@
 //
 //  MPMockBannerCustomEvent.h
-//  MoPubSDKTests
 //
-//  Copyright © 2018 MoPub. All rights reserved.
+//  Copyright 2018 Twitter, Inc.
+//  Licensed under the MoPub SDK License Agreement
+//  http://www.mopub.com/legal/sdk-license-agreement/
 //
 
 #import <Foundation/Foundation.h>
 #import "MPBannerCustomEvent.h"
 
 @interface MPMockBannerCustomEvent : MPBannerCustomEvent
+@property (nonatomic, readonly) BOOL isLocalExtrasAvailableAtRequest;
 
 - (void)requestAdWithSize:(CGSize)size customEventInfo:(NSDictionary *)info adMarkup:(NSString *)adMarkup;
 

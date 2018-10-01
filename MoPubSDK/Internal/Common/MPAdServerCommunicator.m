@@ -1,8 +1,9 @@
 //
 //  MPAdServerCommunicator.m
-//  MoPub
 //
-//  Copyright (c) 2012 MoPub, Inc. All rights reserved.
+//  Copyright 2018 Twitter, Inc.
+//  Licensed under the MoPub SDK License Agreement
+//  http://www.mopub.com/legal/sdk-license-agreement/
 //
 
 #import "MPAdServerCommunicator.h"
@@ -137,13 +138,14 @@ static NSString * const kAdResonsesContentKey = @"content";
                       adapterLoadDuration:(NSTimeInterval)duration
                         adapterLoadResult:(MPAfterLoadResult)result
 {
-    NSURL * afterLoadUrl = [configuration afterLoadUrlWithLoadDuration:duration loadResult:result];
-    if (afterLoadUrl != nil) {
+    NSArray * afterLoadUrls = [configuration afterLoadUrlsWithLoadDuration:duration loadResult:result];
+
+    for (NSURL * afterLoadUrl in afterLoadUrls) {
         MPURLRequest * request = [MPURLRequest requestWithURL:afterLoadUrl];
         [MPHTTPNetworkSession startTaskWithHttpRequest:request responseHandler:^(NSData * _Nonnull data, NSHTTPURLResponse * _Nonnull response) {
-            MPLogTrace(@"Sucessfully sent after load URL");
+            // no-op
         } errorHandler:^(NSError * _Nonnull error) {
-            MPLogWarn(@"Failed to send after load URL");
+            MPLogDebug(@"Failed to send after load URL: %@", afterLoadUrl);
         }];
     }
 }

@@ -1,8 +1,9 @@
 //
 //  MPInterstitialAdManager.m
-//  MoPub
 //
-//  Copyright (c) 2012 MoPub, Inc. All rights reserved.
+//  Copyright 2018 Twitter, Inc.
+//  Licensed under the MoPub SDK License Agreement
+//  http://www.mopub.com/legal/sdk-license-agreement/
 //
 
 #import <objc/runtime.h>
@@ -10,6 +11,7 @@
 #import "MPInterstitialAdManager.h"
 
 #import "MPAdServerURLBuilder.h"
+#import "MPAdTargeting.h"
 #import "MPInterstitialAdController.h"
 #import "MPInterstitialCustomEventAdapter.h"
 #import "MPCoreInstanceProvider.h"
@@ -29,6 +31,7 @@
 @property (nonatomic, strong) MPAdConfiguration *requestingConfiguration;
 @property (nonatomic, strong) NSMutableArray<MPAdConfiguration *> *remainingConfigurations;
 @property (nonatomic, assign) NSTimeInterval adapterLoadStartTimestamp;
+@property (nonatomic, strong) MPAdTargeting * targeting;
 
 - (void)setUpAdapterWithConfiguration:(MPAdConfiguration *)configuration;
 
@@ -86,15 +89,16 @@
 }
 
 
-- (void)loadInterstitialWithAdUnitID:(NSString *)ID keywords:(NSString *)keywords userDataKeywords:(NSString *)userDataKeywords location:(CLLocation *)location
+- (void)loadInterstitialWithAdUnitID:(NSString *)ID targeting:(MPAdTargeting *)targeting
 {
     if (self.ready) {
         [self.delegate managerDidLoadInterstitial:self];
     } else {
+        self.targeting = targeting;
         [self loadAdWithURL:[MPAdServerURLBuilder URLWithAdUnitID:ID
-                                                         keywords:keywords
-                                                 userDataKeywords:userDataKeywords
-                                                         location:location]];
+                                                         keywords:targeting.keywords
+                                                 userDataKeywords:targeting.userDataKeywords
+                                                         location:targeting.location]];
     }
 }
 
@@ -194,7 +198,7 @@
 
     MPBaseInterstitialAdapter *adapter = [[MPInterstitialCustomEventAdapter alloc] initWithDelegate:self];
     self.adapter = adapter;
-    [self.adapter _getAdWithConfiguration:configuration];
+    [self.adapter _getAdWithConfiguration:configuration targeting:self.targeting];
 }
 
 #pragma mark - MPInterstitialAdapterDelegate

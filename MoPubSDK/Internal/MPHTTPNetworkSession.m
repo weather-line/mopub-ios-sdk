@@ -1,13 +1,16 @@
 //
 //  MPHTTPNetworkSession.m
 //
-//  Copyright © 2018 MoPub. All rights reserved.
+//  Copyright 2018 Twitter, Inc.
+//  Licensed under the MoPub SDK License Agreement
+//  http://www.mopub.com/legal/sdk-license-agreement/
 //
 
 #import "MPError.h"
 #import "MPHTTPNetworkTaskData.h"
 #import "MPHTTPNetworkSession.h"
 #import "MPLogging.h"
+#import "NSError+MPAdditions.h"
 
 // Macros for dispatching asynchronously to the main queue
 #define safe_block(block, ...) block ? block(__VA_ARGS__) : nil
@@ -226,8 +229,7 @@ didCompleteWithError:(nullable NSError *)error {
     // Validate response code is not an error (>= 400)
     // See https://en.wikipedia.org/wiki/List_of_HTTP_status_codes for all valid status codes.
     if (httpResponse.statusCode >= 400) {
-        NSString * not200ResponseMessage = [NSString stringWithFormat:@"HTTP status code %ld.", (long)httpResponse.statusCode];
-        NSError * not200ResponseError = [NSError errorWithDomain:kMoPubSDKNetworkDomain code:MOPUBErrorHTTPResponseNot200 userInfo:@{ NSLocalizedDescriptionKey: not200ResponseMessage }];
+        NSError * not200ResponseError = [NSError networkErrorWithHTTPStatusCode:httpResponse.statusCode];
         MPLogError(@"Network request failed with: %@", not200ResponseError.localizedDescription);
         safe_block(taskData.errorHandler, not200ResponseError);
         return;

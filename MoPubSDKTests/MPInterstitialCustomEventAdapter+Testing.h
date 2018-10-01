@@ -1,8 +1,9 @@
 //
 //  MPInterstitialCustomEventAdapter+Testing.h
-//  MoPubSDK
 //
-//  Copyright © 2017 MoPub. All rights reserved.
+//  Copyright 2018 Twitter, Inc.
+//  Licensed under the MoPub SDK License Agreement
+//  http://www.mopub.com/legal/sdk-license-agreement/
 //
 
 #import "MPInterstitialCustomEventAdapter.h"
@@ -14,5 +15,6 @@
 
 @property (nonatomic, strong) MPAdConfiguration * configuration;
 @property (nonatomic, assign) BOOL hasTrackedImpression;
+@property (nonatomic, strong) MPInterstitialCustomEvent * interstitialCustomEvent;
 
 @end

@@ -1,8 +1,9 @@
 //
 //  MPAdConfigurationFactory.m
-//  MoPub
 //
-//  Copyright (c) 2013 MoPub. All rights reserved.
+//  Copyright 2018 Twitter, Inc.
+//  Licensed under the MoPub SDK License Agreement
+//  http://www.mopub.com/legal/sdk-license-agreement/
 //
 
 #import "MPAdConfigurationFactory.h"
@@ -99,7 +100,6 @@ extern NSString *const kNativeVideoTrackersMetadataKey;
               kNextUrlMetadataKey: @"http://ads.mopub.com/m/failURL",
               kHeightMetadataKey: @"50",
               kImpressionTrackerMetadataKey: @"http://ads.mopub.com/m/impressionTracker",
-              kLaunchpageMetadataKey: @"http://publisher.com",
               kRefreshTimeMetadataKey: @"30",
               kWidthMetadataKey: @"320"
               } mutableCopy];
@@ -153,7 +153,6 @@ extern NSString *const kNativeVideoTrackersMetadataKey;
               kClickthroughMetadataKey: @"http://ads.mopub.com/m/clickThroughTracker?a=1",
               kNextUrlMetadataKey: @"http://ads.mopub.com/m/failURL",
               kImpressionTrackerMetadataKey: @"http://ads.mopub.com/m/impressionTracker",
-              kLaunchpageMetadataKey: @"http://publisher.com",
               kInterstitialAdTypeMetadataKey: kAdTypeHtml,
               kOrientationTypeMetadataKey: @"p"
               } mutableCopy];
@@ -236,7 +235,6 @@ extern NSString *const kNativeVideoTrackersMetadataKey;
               kClickthroughMetadataKey: @"http://ads.mopub.com/m/clickThroughTracker?a=1",
               kNextUrlMetadataKey: @"http://ads.mopub.com/m/failURL",
               kImpressionTrackerMetadataKey: @"http://ads.mopub.com/m/impressionTracker",
-              kLaunchpageMetadataKey: @"http://publisher.com",
               kInterstitialAdTypeMetadataKey: kAdTypeHtml,
               } mutableCopy];
 }

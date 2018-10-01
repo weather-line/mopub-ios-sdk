@@ -1,13 +1,15 @@
 //
 //  MPBannerCustomEventAdapter.m
-//  MoPub
 //
-//  Copyright (c) 2012 MoPub, Inc. All rights reserved.
+//  Copyright 2018 Twitter, Inc.
+//  Licensed under the MoPub SDK License Agreement
+//  http://www.mopub.com/legal/sdk-license-agreement/
 //
 
 #import "MPBannerCustomEventAdapter.h"
 
 #import "MPAdConfiguration.h"
+#import "MPAdTargeting.h"
 #import "MPBannerCustomEvent.h"
 #import "MPCoreInstanceProvider.h"
 #import "MPLogging.h"
@@ -54,7 +56,7 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-- (void)getAdWithConfiguration:(MPAdConfiguration *)configuration containerSize:(CGSize)size
+- (void)getAdWithConfiguration:(MPAdConfiguration *)configuration targeting:(MPAdTargeting *)targeting containerSize:(CGSize)size
 {
     MPLogInfo(@"Looking for custom event class named %@.", configuration.customEventClass);
     self.configuration = configuration;
@@ -69,6 +71,7 @@
 
     self.bannerCustomEvent = customEvent;
     self.bannerCustomEvent.delegate = self;
+    self.bannerCustomEvent.localExtras = targeting.localExtras;
     [self.bannerCustomEvent requestAdWithSize:size customEventInfo:configuration.customEventClassData adMarkup:configuration.advancedBidPayload];
 }
 

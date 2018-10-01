@@ -1,8 +1,9 @@
 //
 //  MPAdConfigurationTests.m
-//  MoPubSDK
 //
-//  Copyright © 2016 MoPub. All rights reserved.
+//  Copyright 2018 Twitter, Inc.
+//  Licensed under the MoPub SDK License Agreement
+//  http://www.mopub.com/legal/sdk-license-agreement/
 //
 
 #import <XCTest/XCTest.h>
@@ -413,6 +414,556 @@ extern NSString * const kNativeImpressionMinVisiblePixelsMetadataKey;
     XCTAssert(config.impressionTrackingURLs.count == 2);
     XCTAssert([config.impressionTrackingURLs containsObject:[NSURL URLWithString:@"https://google.com"]]);
     XCTAssert([config.impressionTrackingURLs containsObject:[NSURL URLWithString:@"https://mopub.com"]]);
+}
+
+#pragma mark - Single vs Multiple URL Separator
+
+- (void)testSingleValidURL {
+    NSString * url = @"https://google.com";
+    NSString * key = @"url";
+    NSDictionary * metadata = @{ @"url": url };
+
+    MPAdConfiguration * dummyConfig = [[MPAdConfiguration alloc] initWithMetadata:nil data:nil];
+
+    NSArray <NSString *> * strings = [dummyConfig URLStringsFromMetadata:metadata forKey:key];
+
+    XCTAssert(strings.count == 1);
+    XCTAssert([strings.firstObject isEqualToString:url]);
+
+    NSArray <NSURL *> * urls = [dummyConfig URLsFromMetadata:metadata forKey:key];
+    XCTAssert(urls.count == 1);
+    XCTAssert([urls.firstObject.absoluteString isEqualToString:url]);
+}
+
+- (void)testMultipleValidURLs {
+    NSArray * urlStrings = @[@"https://google.com", @"https://twitter.com"];
+    NSString * key = @"url";
+    NSDictionary * metadata = @{ @"url": urlStrings };
+
+    MPAdConfiguration * dummyConfig = [[MPAdConfiguration alloc] initWithMetadata:nil data:nil];
+
+    NSArray <NSString *> * strings = [dummyConfig URLStringsFromMetadata:metadata forKey:key];
+
+    XCTAssert(strings.count == 2);
+    XCTAssert([strings containsObject:urlStrings[0]]);
+    XCTAssert([strings containsObject:urlStrings[1]]);
+
+    NSArray <NSURL *> * urls = [dummyConfig URLsFromMetadata:metadata forKey:key];
+    XCTAssert(urls.count == 2);
+    XCTAssert([urls containsObject:[NSURL URLWithString:urlStrings[0]]]);
+    XCTAssert([urls containsObject:[NSURL URLWithString:urlStrings[1]]]);
+}
+
+- (void)testMultipleInvalidItems {
+    NSArray * urlStrings = @[@[], @{}, @[@"https://google.com"]];
+    NSString * key = @"url";
+    NSDictionary * metadata = @{ @"url": urlStrings };
+
+    MPAdConfiguration * dummyConfig = [[MPAdConfiguration alloc] initWithMetadata:nil data:nil];
+
+    NSArray <NSString *> * strings = [dummyConfig URLStringsFromMetadata:metadata forKey:key];
+    XCTAssertNil(strings);
+
+    NSArray <NSURL *> * urls = [dummyConfig URLsFromMetadata:metadata forKey:key];
+    XCTAssertNil(urls);
+}
+
+- (void)testMultipleValidURLsWithMultipleInvalidItems {
+    NSArray * urlStrings = @[@"https://google.com", @{@"test": @"test"}, @"https://twitter.com", @[@"test", @"test2"]];
+    NSString * key = @"url";
+    NSDictionary * metadata = @{ @"url": urlStrings };
+
+    MPAdConfiguration * dummyConfig = [[MPAdConfiguration alloc] initWithMetadata:nil data:nil];
+
+    NSArray <NSString *> * strings = [dummyConfig URLStringsFromMetadata:metadata forKey:key];
+
+    XCTAssert(strings.count == 2);
+    XCTAssert([strings containsObject:urlStrings[0]]);
+    XCTAssert([strings containsObject:urlStrings[2]]);
+
+    NSArray <NSURL *> * urls = [dummyConfig URLsFromMetadata:metadata forKey:key];
+    XCTAssert(urls.count == 2);
+    XCTAssert([urls containsObject:[NSURL URLWithString:urlStrings[0]]]);
+    XCTAssert([urls containsObject:[NSURL URLWithString:urlStrings[2]]]);
+}
+
+- (void)testSingleInvalidItem {
+    NSDictionary * urlStrings = @{};
+    NSString * key = @"url";
+    NSDictionary * metadata = @{ @"url": urlStrings };
+
+    MPAdConfiguration * dummyConfig = [[MPAdConfiguration alloc] initWithMetadata:nil data:nil];
+
+    NSArray <NSString *> * strings = [dummyConfig URLStringsFromMetadata:metadata forKey:key];
+    XCTAssertNil(strings);
+
+    NSArray <NSURL *> * urls = [dummyConfig URLsFromMetadata:metadata forKey:key];
+    XCTAssertNil(urls);
+}
+
+- (void)testEmptyString {
+    NSString * url = @"";
+    NSString * key = @"url";
+    NSDictionary * metadata = @{ @"url": url };
+
+    MPAdConfiguration * dummyConfig = [[MPAdConfiguration alloc] initWithMetadata:nil data:nil];
+
+    NSArray <NSString *> * strings = [dummyConfig URLStringsFromMetadata:metadata forKey:key];
+    XCTAssertNil(strings);
+
+    NSArray <NSURL *> * urls = [dummyConfig URLsFromMetadata:metadata forKey:key];
+    XCTAssertNil(urls);
+}
+
+- (void)testInvalidUrlStringWontConvert {
+    NSString * url = @"definitely not a url";
+    NSString * key = @"url";
+    NSDictionary * metadata = @{ @"url": url };
+
+    MPAdConfiguration * dummyConfig = [[MPAdConfiguration alloc] initWithMetadata:nil data:nil];
+
+    NSArray <NSURL *> * urls = [dummyConfig URLsFromMetadata:metadata forKey:key];
+    XCTAssertNil(urls);
+}
+
+#pragma mark - After Load URLs
+
+- (void)testSingleDefaultUrlBackwardsCompatibility {
+    NSDictionary * metadata = @{ kAfterLoadUrlMetadataKey: @"https://google.com" };
+    MPAdConfiguration * config = [[MPAdConfiguration alloc] initWithMetadata:metadata data:nil];
+
+    NSArray <NSURL *> * urls = [config afterLoadUrlsWithLoadDuration:0.0 loadResult:MPAfterLoadResultAdLoaded];
+
+    XCTAssert(urls.count == 1);
+    XCTAssert([urls.firstObject.absoluteString isEqualToString:@"https://google.com"]);
+}
+
+- (void)testNoDefaultUrlAndSingleSuccessUrlAndSingleFailureUrlWithLoadResultAdLoaded {
+    NSDictionary * metadata = @{
+                                kAfterLoadSuccessUrlMetadataKey: @"https://google.com",
+                                kAfterLoadFailureUrlMetadataKey: @"https://twitter.com",
+                                };
+    MPAdConfiguration * config = [[MPAdConfiguration alloc] initWithMetadata:metadata data:nil];
+
+    NSArray <NSURL *> * urls = [config afterLoadUrlsWithLoadDuration:0.0 loadResult:MPAfterLoadResultAdLoaded];
+
+    XCTAssert(urls.count == 1);
+    XCTAssert([urls.firstObject.absoluteString isEqualToString:@"https://google.com"]);
+}
+
+- (void)testNoDefaultUrlAndSingleSuccessUrlAndSingleFailureUrlWithLoadResultError {
+    NSDictionary * metadata = @{
+                                kAfterLoadSuccessUrlMetadataKey: @"https://google.com",
+                                kAfterLoadFailureUrlMetadataKey: @"https://twitter.com",
+                                };
+    MPAdConfiguration * config = [[MPAdConfiguration alloc] initWithMetadata:metadata data:nil];
+
+    NSArray <NSURL *> * urls = [config afterLoadUrlsWithLoadDuration:0.0 loadResult:MPAfterLoadResultError];
+
+    XCTAssert(urls.count == 1);
+    XCTAssert([urls.firstObject.absoluteString isEqualToString:@"https://twitter.com"]);
+}
+
+- (void)testNoDefaultUrlAndSingleSuccessUrlAndSingleFailureUrlWithLoadResultMissingAdapter {
+    NSDictionary * metadata = @{
+                                kAfterLoadSuccessUrlMetadataKey: @"https://google.com",
+                                kAfterLoadFailureUrlMetadataKey: @"https://twitter.com",
+                                };
+    MPAdConfiguration * config = [[MPAdConfiguration alloc] initWithMetadata:metadata data:nil];
+
+    NSArray <NSURL *> * urls = [config afterLoadUrlsWithLoadDuration:0.0 loadResult:MPAfterLoadResultMissingAdapter];
+
+    XCTAssert(urls.count == 1);
+    XCTAssert([urls.firstObject.absoluteString isEqualToString:@"https://twitter.com"]);
+}
+
+- (void)testNoDefaultUrlAndSingleSuccessUrlAndSingleFailureUrlWithLoadResultTimeout {
+    NSDictionary * metadata = @{
+                                kAfterLoadSuccessUrlMetadataKey: @"https://google.com",
+                                kAfterLoadFailureUrlMetadataKey: @"https://twitter.com",
+                                };
+    MPAdConfiguration * config = [[MPAdConfiguration alloc] initWithMetadata:metadata data:nil];
+
+    NSArray <NSURL *> * urls = [config afterLoadUrlsWithLoadDuration:0.0 loadResult:MPAfterLoadResultTimeout];
+
+    XCTAssert(urls.count == 1);
+    XCTAssert([urls.firstObject.absoluteString isEqualToString:@"https://twitter.com"]);
+}
+
+- (void)testSingleDefaultUrlAndSingleSuccessWithLoadResultAdLoaded {
+    NSDictionary * metadata = @{
+                                kAfterLoadUrlMetadataKey: @"https://google.com",
+                                kAfterLoadSuccessUrlMetadataKey: @"https://twitter.com",
+                                };
+    MPAdConfiguration * config = [[MPAdConfiguration alloc] initWithMetadata:metadata data:nil];
+
+    NSArray <NSURL *> * urls = [config afterLoadUrlsWithLoadDuration:0.0 loadResult:MPAfterLoadResultAdLoaded];
+
+    XCTAssert(urls.count == 2);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://google.com"]]);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://twitter.com"]]);
+}
+
+- (void)testSingleDefaultUrlAndSingleSuccessWithLoadResultError {
+    NSDictionary * metadata = @{
+                                kAfterLoadUrlMetadataKey: @"https://google.com",
+                                kAfterLoadSuccessUrlMetadataKey: @"https://twitter.com",
+                                };
+    MPAdConfiguration * config = [[MPAdConfiguration alloc] initWithMetadata:metadata data:nil];
+
+    NSArray <NSURL *> * urls = [config afterLoadUrlsWithLoadDuration:0.0 loadResult:MPAfterLoadResultError];
+
+    XCTAssert(urls.count == 1);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://google.com"]]);
+}
+
+- (void)testSingleDefaultUrlAndSingleSuccessWithLoadResultMissingAdapter {
+    NSDictionary * metadata = @{
+                                kAfterLoadUrlMetadataKey: @"https://google.com",
+                                kAfterLoadSuccessUrlMetadataKey: @"https://twitter.com",
+                                };
+    MPAdConfiguration * config = [[MPAdConfiguration alloc] initWithMetadata:metadata data:nil];
+
+    NSArray <NSURL *> * urls = [config afterLoadUrlsWithLoadDuration:0.0 loadResult:MPAfterLoadResultMissingAdapter];
+
+    XCTAssert(urls.count == 1);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://google.com"]]);
+}
+
+- (void)testSingleDefaultUrlAndSingleSuccessWithLoadResultTimeout {
+    NSDictionary * metadata = @{
+                                kAfterLoadUrlMetadataKey: @"https://google.com",
+                                kAfterLoadSuccessUrlMetadataKey: @"https://twitter.com",
+                                };
+    MPAdConfiguration * config = [[MPAdConfiguration alloc] initWithMetadata:metadata data:nil];
+
+    NSArray <NSURL *> * urls = [config afterLoadUrlsWithLoadDuration:0.0 loadResult:MPAfterLoadResultTimeout];
+
+    XCTAssert(urls.count == 1);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://google.com"]]);
+}
+
+- (void)testSingleDefaultUrlAndSingleFailureWithLoadResultAdLoaded {
+    NSDictionary * metadata = @{
+                                kAfterLoadUrlMetadataKey: @"https://google.com",
+                                kAfterLoadFailureUrlMetadataKey: @"https://twitter.com",
+                                };
+    MPAdConfiguration * config = [[MPAdConfiguration alloc] initWithMetadata:metadata data:nil];
+
+    NSArray <NSURL *> * urls = [config afterLoadUrlsWithLoadDuration:0.0 loadResult:MPAfterLoadResultAdLoaded];
+
+    XCTAssert(urls.count == 1);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://google.com"]]);
+}
+
+- (void)testSingleDefaultUrlAndSingleFailureWithLoadResultError {
+    NSDictionary * metadata = @{
+                                kAfterLoadUrlMetadataKey: @"https://google.com",
+                                kAfterLoadFailureUrlMetadataKey: @"https://twitter.com",
+                                };
+    MPAdConfiguration * config = [[MPAdConfiguration alloc] initWithMetadata:metadata data:nil];
+
+    NSArray <NSURL *> * urls = [config afterLoadUrlsWithLoadDuration:0.0 loadResult:MPAfterLoadResultError];
+
+    XCTAssert(urls.count == 2);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://google.com"]]);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://twitter.com"]]);
+}
+
+- (void)testSingleDefaultUrlAndSingleFailureWithLoadResultMissingAdapter {
+    NSDictionary * metadata = @{
+                                kAfterLoadUrlMetadataKey: @"https://google.com",
+                                kAfterLoadFailureUrlMetadataKey: @"https://twitter.com",
+                                };
+    MPAdConfiguration * config = [[MPAdConfiguration alloc] initWithMetadata:metadata data:nil];
+
+    NSArray <NSURL *> * urls = [config afterLoadUrlsWithLoadDuration:0.0 loadResult:MPAfterLoadResultMissingAdapter];
+
+    XCTAssert(urls.count == 2);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://google.com"]]);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://twitter.com"]]);
+}
+
+- (void)testSingleDefaultUrlAndSingleFailureWithLoadResultTimeout {
+    NSDictionary * metadata = @{
+                                kAfterLoadUrlMetadataKey: @"https://google.com",
+                                kAfterLoadFailureUrlMetadataKey: @"https://twitter.com",
+                                };
+    MPAdConfiguration * config = [[MPAdConfiguration alloc] initWithMetadata:metadata data:nil];
+
+    NSArray <NSURL *> * urls = [config afterLoadUrlsWithLoadDuration:0.0 loadResult:MPAfterLoadResultTimeout];
+
+    XCTAssert(urls.count == 2);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://google.com"]]);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://twitter.com"]]);
+}
+
+- (void)testSingleDefaultUrlAndSingleSuccessUrlAndSingleFailureUrlWithLoadResultAdLoaded {
+    NSDictionary * metadata = @{
+                                kAfterLoadUrlMetadataKey: @"https://google.com",
+                                kAfterLoadSuccessUrlMetadataKey: @"https://testurl.com",
+                                kAfterLoadFailureUrlMetadataKey: @"https://twitter.com",
+                                };
+    MPAdConfiguration * config = [[MPAdConfiguration alloc] initWithMetadata:metadata data:nil];
+
+    NSArray <NSURL *> * urls = [config afterLoadUrlsWithLoadDuration:0.0 loadResult:MPAfterLoadResultAdLoaded];
+
+    XCTAssert(urls.count == 2);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://google.com"]]);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://testurl.com"]]);
+    XCTAssert(![urls containsObject:[NSURL URLWithString:@"https://twitter.com"]]);
+}
+
+- (void)testSingleDefaultUrlAndSingleSuccessUrlAndSingleFailureUrlWithLoadResultError {
+    NSDictionary * metadata = @{
+                                kAfterLoadUrlMetadataKey: @"https://google.com",
+                                kAfterLoadSuccessUrlMetadataKey: @"https://testurl.com",
+                                kAfterLoadFailureUrlMetadataKey: @"https://twitter.com",
+                                };
+    MPAdConfiguration * config = [[MPAdConfiguration alloc] initWithMetadata:metadata data:nil];
+
+    NSArray <NSURL *> * urls = [config afterLoadUrlsWithLoadDuration:0.0 loadResult:MPAfterLoadResultError];
+
+    XCTAssert(urls.count == 2);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://google.com"]]);
+    XCTAssert(![urls containsObject:[NSURL URLWithString:@"https://testurl.com"]]);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://twitter.com"]]);
+}
+
+- (void)testSingleDefaultUrlAndSingleSuccessUrlAndSingleFailureUrlWithLoadResultMissingAdapter {
+    NSDictionary * metadata = @{
+                                kAfterLoadUrlMetadataKey: @"https://google.com",
+                                kAfterLoadSuccessUrlMetadataKey: @"https://testurl.com",
+                                kAfterLoadFailureUrlMetadataKey: @"https://twitter.com",
+                                };
+    MPAdConfiguration * config = [[MPAdConfiguration alloc] initWithMetadata:metadata data:nil];
+
+    NSArray <NSURL *> * urls = [config afterLoadUrlsWithLoadDuration:0.0 loadResult:MPAfterLoadResultMissingAdapter];
+
+    XCTAssert(urls.count == 2);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://google.com"]]);
+    XCTAssert(![urls containsObject:[NSURL URLWithString:@"https://testurl.com"]]);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://twitter.com"]]);
+}
+
+- (void)testSingleDefaultUrlAndSingleSuccessUrlAndSingleFailureUrlWithLoadResultTimeout {
+    NSDictionary * metadata = @{
+                                kAfterLoadUrlMetadataKey: @"https://google.com",
+                                kAfterLoadSuccessUrlMetadataKey: @"https://testurl.com",
+                                kAfterLoadFailureUrlMetadataKey: @"https://twitter.com",
+                                };
+    MPAdConfiguration * config = [[MPAdConfiguration alloc] initWithMetadata:metadata data:nil];
+
+    NSArray <NSURL *> * urls = [config afterLoadUrlsWithLoadDuration:0.0 loadResult:MPAfterLoadResultTimeout];
+
+    XCTAssert(urls.count == 2);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://google.com"]]);
+    XCTAssert(![urls containsObject:[NSURL URLWithString:@"https://testurl.com"]]);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://twitter.com"]]);
+}
+
+- (void)testMultipleDefaultUrlsAndMultipleSuccessUrlsWithLoadResultAdLoaded {
+    NSDictionary * metadata = @{
+                                kAfterLoadUrlMetadataKey: @[@"https://google.com", @"https://test.com"],
+                                kAfterLoadSuccessUrlMetadataKey: @[@"https://twitter.com", @"https://test2.com"],
+                                };
+    MPAdConfiguration * config = [[MPAdConfiguration alloc] initWithMetadata:metadata data:nil];
+
+    NSArray <NSURL *> * urls = [config afterLoadUrlsWithLoadDuration:0.0 loadResult:MPAfterLoadResultAdLoaded];
+
+    XCTAssert(urls.count == 4);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://google.com"]]);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://twitter.com"]]);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://test.com"]]);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://test2.com"]]);
+}
+
+- (void)testMultipleDefaultUrlsAndMultipleSuccessUrlsWithLoadResultError {
+    NSDictionary * metadata = @{
+                                kAfterLoadUrlMetadataKey: @[@"https://google.com", @"https://test.com"],
+                                kAfterLoadSuccessUrlMetadataKey: @[@"https://twitter.com", @"https://test2.com"],
+                                };
+    MPAdConfiguration * config = [[MPAdConfiguration alloc] initWithMetadata:metadata data:nil];
+
+    NSArray <NSURL *> * urls = [config afterLoadUrlsWithLoadDuration:0.0 loadResult:MPAfterLoadResultError];
+
+    XCTAssert(urls.count == 2);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://google.com"]]);
+    XCTAssert(![urls containsObject:[NSURL URLWithString:@"https://twitter.com"]]);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://test.com"]]);
+    XCTAssert(![urls containsObject:[NSURL URLWithString:@"https://test2.com"]]);
+}
+
+- (void)testMultipleDefaultUrlsAndMultipleSuccessUrlsWithLoadResultMissingAdapter {
+    NSDictionary * metadata = @{
+                                kAfterLoadUrlMetadataKey: @[@"https://google.com", @"https://test.com"],
+                                kAfterLoadSuccessUrlMetadataKey: @[@"https://twitter.com", @"https://test2.com"],
+                                };
+    MPAdConfiguration * config = [[MPAdConfiguration alloc] initWithMetadata:metadata data:nil];
+
+    NSArray <NSURL *> * urls = [config afterLoadUrlsWithLoadDuration:0.0 loadResult:MPAfterLoadResultMissingAdapter];
+
+    XCTAssert(urls.count == 2);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://google.com"]]);
+    XCTAssert(![urls containsObject:[NSURL URLWithString:@"https://twitter.com"]]);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://test.com"]]);
+    XCTAssert(![urls containsObject:[NSURL URLWithString:@"https://test2.com"]]);
+}
+
+- (void)testMultipleDefaultUrlsAndMultipleSuccessUrlsWithLoadResultTimeout {
+    NSDictionary * metadata = @{
+                                kAfterLoadUrlMetadataKey: @[@"https://google.com", @"https://test.com"],
+                                kAfterLoadSuccessUrlMetadataKey: @[@"https://twitter.com", @"https://test2.com"],
+                                };
+    MPAdConfiguration * config = [[MPAdConfiguration alloc] initWithMetadata:metadata data:nil];
+
+    NSArray <NSURL *> * urls = [config afterLoadUrlsWithLoadDuration:0.0 loadResult:MPAfterLoadResultTimeout];
+
+    XCTAssert(urls.count == 2);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://google.com"]]);
+    XCTAssert(![urls containsObject:[NSURL URLWithString:@"https://twitter.com"]]);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://test.com"]]);
+    XCTAssert(![urls containsObject:[NSURL URLWithString:@"https://test2.com"]]);
+}
+
+- (void)testMultipleDefaultUrlsAndMultipleFailureUrlsWithLoadResultAdLoaded {
+    NSDictionary * metadata = @{
+                                kAfterLoadUrlMetadataKey: @[@"https://google.com", @"https://test.com"],
+                                kAfterLoadFailureUrlMetadataKey: @[@"https://twitter.com", @"https://test2.com"],
+                                };
+    MPAdConfiguration * config = [[MPAdConfiguration alloc] initWithMetadata:metadata data:nil];
+
+    NSArray <NSURL *> * urls = [config afterLoadUrlsWithLoadDuration:0.0 loadResult:MPAfterLoadResultAdLoaded];
+
+    XCTAssert(urls.count == 2);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://google.com"]]);
+    XCTAssert(![urls containsObject:[NSURL URLWithString:@"https://twitter.com"]]);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://test.com"]]);
+    XCTAssert(![urls containsObject:[NSURL URLWithString:@"https://test2.com"]]);
+}
+
+- (void)testMultipleDefaultUrlsAndMultipleFailureUrlsWithLoadResultError {
+    NSDictionary * metadata = @{
+                                kAfterLoadUrlMetadataKey: @[@"https://google.com", @"https://test.com"],
+                                kAfterLoadFailureUrlMetadataKey: @[@"https://twitter.com", @"https://test2.com"],
+                                };
+    MPAdConfiguration * config = [[MPAdConfiguration alloc] initWithMetadata:metadata data:nil];
+
+    NSArray <NSURL *> * urls = [config afterLoadUrlsWithLoadDuration:0.0 loadResult:MPAfterLoadResultError];
+
+    XCTAssert(urls.count == 4);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://google.com"]]);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://twitter.com"]]);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://test.com"]]);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://test2.com"]]);
+}
+
+- (void)testMultipleDefaultUrlsAndMultipleFailureUrlsWithLoadResultMissingAdapter {
+    NSDictionary * metadata = @{
+                                kAfterLoadUrlMetadataKey: @[@"https://google.com", @"https://test.com"],
+                                kAfterLoadFailureUrlMetadataKey: @[@"https://twitter.com", @"https://test2.com"],
+                                };
+    MPAdConfiguration * config = [[MPAdConfiguration alloc] initWithMetadata:metadata data:nil];
+
+    NSArray <NSURL *> * urls = [config afterLoadUrlsWithLoadDuration:0.0 loadResult:MPAfterLoadResultMissingAdapter];
+
+    XCTAssert(urls.count == 4);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://google.com"]]);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://twitter.com"]]);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://test.com"]]);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://test2.com"]]);
+}
+
+- (void)testMultipleDefaultUrlsAndMultipleFailureUrlsWithLoadResultTimeout {
+    NSDictionary * metadata = @{
+                                kAfterLoadUrlMetadataKey: @[@"https://google.com", @"https://test.com"],
+                                kAfterLoadFailureUrlMetadataKey: @[@"https://twitter.com", @"https://test2.com"],
+                                };
+    MPAdConfiguration * config = [[MPAdConfiguration alloc] initWithMetadata:metadata data:nil];
+
+    NSArray <NSURL *> * urls = [config afterLoadUrlsWithLoadDuration:0.0 loadResult:MPAfterLoadResultTimeout];
+
+    XCTAssert(urls.count == 4);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://google.com"]]);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://twitter.com"]]);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://test.com"]]);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://test2.com"]]);
+}
+
+- (void)testMultipleDefaultUrlsAndMultipleSuccessUrlsAndMultipleFailureUrlsWithLoadResultAdLoaded {
+    NSDictionary * metadata = @{
+                                kAfterLoadUrlMetadataKey: @[@"https://google.com", @"https://test.com"],
+                                kAfterLoadSuccessUrlMetadataKey: @[@"https://fakeurl.com", @"https://fakeurl2.com"],
+                                kAfterLoadFailureUrlMetadataKey: @[@"https://twitter.com", @"https://test2.com"],
+                                };
+    MPAdConfiguration * config = [[MPAdConfiguration alloc] initWithMetadata:metadata data:nil];
+
+    NSArray <NSURL *> * urls = [config afterLoadUrlsWithLoadDuration:0.0 loadResult:MPAfterLoadResultAdLoaded];
+
+    XCTAssert(urls.count == 4);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://google.com"]]);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://test.com"]]);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://fakeurl.com"]]);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://fakeurl2.com"]]);
+    XCTAssert(![urls containsObject:[NSURL URLWithString:@"https://twitter.com"]]);
+    XCTAssert(![urls containsObject:[NSURL URLWithString:@"https://test2.com"]]);
+}
+
+- (void)testMultipleDefaultUrlsAndMultipleSuccessUrlsAndMultipleFailureUrlsWithLoadResultError {
+    NSDictionary * metadata = @{
+                                kAfterLoadUrlMetadataKey: @[@"https://google.com", @"https://test.com"],
+                                kAfterLoadSuccessUrlMetadataKey: @[@"https://fakeurl.com", @"https://fakeurl2.com"],
+                                kAfterLoadFailureUrlMetadataKey: @[@"https://twitter.com", @"https://test2.com"],
+                                };
+    MPAdConfiguration * config = [[MPAdConfiguration alloc] initWithMetadata:metadata data:nil];
+
+    NSArray <NSURL *> * urls = [config afterLoadUrlsWithLoadDuration:0.0 loadResult:MPAfterLoadResultError];
+
+    XCTAssert(urls.count == 4);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://google.com"]]);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://test.com"]]);
+    XCTAssert(![urls containsObject:[NSURL URLWithString:@"https://fakeurl.com"]]);
+    XCTAssert(![urls containsObject:[NSURL URLWithString:@"https://fakeurl2.com"]]);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://twitter.com"]]);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://test2.com"]]);
+}
+
+- (void)testMultipleDefaultUrlsAndMultipleSuccessUrlsAndMultipleFailureUrlsWithLoadResultMissingAdapter {
+    NSDictionary * metadata = @{
+                                kAfterLoadUrlMetadataKey: @[@"https://google.com", @"https://test.com"],
+                                kAfterLoadSuccessUrlMetadataKey: @[@"https://fakeurl.com", @"https://fakeurl2.com"],
+                                kAfterLoadFailureUrlMetadataKey: @[@"https://twitter.com", @"https://test2.com"],
+                                };
+    MPAdConfiguration * config = [[MPAdConfiguration alloc] initWithMetadata:metadata data:nil];
+
+    NSArray <NSURL *> * urls = [config afterLoadUrlsWithLoadDuration:0.0 loadResult:MPAfterLoadResultMissingAdapter];
+
+    XCTAssert(urls.count == 4);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://google.com"]]);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://test.com"]]);
+    XCTAssert(![urls containsObject:[NSURL URLWithString:@"https://fakeurl.com"]]);
+    XCTAssert(![urls containsObject:[NSURL URLWithString:@"https://fakeurl2.com"]]);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://twitter.com"]]);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://test2.com"]]);
+}
+
+- (void)testMultipleDefaultUrlsAndMultipleSuccessUrlsAndMultipleFailureUrlsWithLoadResultTimeout {
+    NSDictionary * metadata = @{
+                                kAfterLoadUrlMetadataKey: @[@"https://google.com", @"https://test.com"],
+                                kAfterLoadSuccessUrlMetadataKey: @[@"https://fakeurl.com", @"https://fakeurl2.com"],
+                                kAfterLoadFailureUrlMetadataKey: @[@"https://twitter.com", @"https://test2.com"],
+                                };
+    MPAdConfiguration * config = [[MPAdConfiguration alloc] initWithMetadata:metadata data:nil];
+
+    NSArray <NSURL *> * urls = [config afterLoadUrlsWithLoadDuration:0.0 loadResult:MPAfterLoadResultTimeout];
+
+    XCTAssert(urls.count == 4);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://google.com"]]);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://test.com"]]);
+    XCTAssert(![urls containsObject:[NSURL URLWithString:@"https://fakeurl.com"]]);
+    XCTAssert(![urls containsObject:[NSURL URLWithString:@"https://fakeurl2.com"]]);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://twitter.com"]]);
+    XCTAssert([urls containsObject:[NSURL URLWithString:@"https://test2.com"]]);
 }
 
 @end

@@ -1,14 +1,16 @@
 //
 //  MPRewardedVideoAdManagerTests.m
-//  MoPubSDK
 //
-//  Copyright © 2017 MoPub. All rights reserved.
+//  Copyright 2018 Twitter, Inc.
+//  Licensed under the MoPub SDK License Agreement
+//  http://www.mopub.com/legal/sdk-license-agreement/
 //
 
 #import <XCTest/XCTest.h>
 #import "MPAdConfiguration.h"
 #import "MPAdConfigurationFactory.h"
 #import "MPAdServerKeys.h"
+#import "MPAdTargeting.h"
 #import "MPAPIEndpoints.h"
 #import "MPRewardedVideoAdManager.h"
 #import "MPRewardedVideoAdManager+Testing.h"
@@ -490,7 +492,7 @@ static const NSTimeInterval kTestTimeout   = 2; // seconds
         mockAdServerCommunicator = mock;
         mock;
     });
-    [rewardedAd loadRewardedVideoAdWithKeywords:nil userDataKeywords:nil location:nil customerId:nil];
+    [rewardedAd loadRewardedVideoAdWithCustomerId:nil targeting:nil];
 
     XCTAssertNotNil(mockAdServerCommunicator);
     XCTAssertNotNil(mockAdServerCommunicator.lastUrlLoaded);
@@ -501,6 +503,49 @@ static const NSTimeInterval kTestTimeout   = 2; // seconds
     NSString * viewabilityValue = [url stringForPOSTDataKey:kViewabilityStatusKey];
     XCTAssertNotNil(viewabilityValue);
     XCTAssertTrue([viewabilityValue isEqualToString:@"1"]);
+}
+
+#pragma mark - Local Extras
+
+- (void)testLocalExtrasInCustomEvent {
+    XCTestExpectation * expectation = [self expectationWithDescription:@"Wait for rewardedVideo load"];
+
+    MPRewardedVideoDelegateHandler * handler = [MPRewardedVideoDelegateHandler new];
+    handler.didLoadAd = ^{
+        [expectation fulfill];
+    };
+    handler.didFailToLoadAd = ^{
+        XCTFail(@"Encountered an unexpected load failure");
+        [expectation fulfill];
+    };
+
+    // Generate the ad configurations
+    MPAdConfiguration * rewardedVideoThatShouldLoad = [MPAdConfigurationFactory defaultRewardedVideoConfigurationWithCustomEventClassName:@"MPMockRewardedVideoCustomEvent"];
+    NSArray * configurations = @[rewardedVideoThatShouldLoad];
+
+    MPRewardedVideoAdManager * manager = [[MPRewardedVideoAdManager alloc] initWithAdUnitID:kTestAdUnitId delegate:handler];
+    MPMockAdServerCommunicator * communicator = [[MPMockAdServerCommunicator alloc] initWithDelegate:manager];
+    communicator.mockConfigurationsResponse = configurations;
+    manager.communicator = communicator;
+
+    MPAdTargeting * targeting = [[MPAdTargeting alloc] init];
+    targeting.localExtras = @{ @"testing": @"YES" };
+    [manager loadRewardedVideoAdWithCustomerId:@"CUSTOMER_ID" targeting:targeting];
+
+    [self waitForExpectationsWithTimeout:kTestTimeout handler:^(NSError * _Nullable error) {
+        if (error != nil) {
+            XCTFail(@"Timed out");
+        }
+    }];
+
+    MPRewardedVideoAdapter * adapter = (MPRewardedVideoAdapter *)manager.adapter;
+    MPMockRewardedVideoCustomEvent * customEvent = (MPMockRewardedVideoCustomEvent *)adapter.rewardedVideoCustomEvent;
+    XCTAssertNotNil(customEvent);
+
+    NSDictionary * localExtras = customEvent.localExtras;
+    XCTAssertNotNil(localExtras);
+    XCTAssert([localExtras[@"testing"] isEqualToString:@"YES"]);
+    XCTAssertTrue(customEvent.isLocalExtrasAvailableAtRequest);
 }
 
 @end

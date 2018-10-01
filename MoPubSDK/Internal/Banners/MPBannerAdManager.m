@@ -1,12 +1,14 @@
 //
 //  MPBannerAdManager.m
-//  MoPub
 //
-//  Copyright (c) 2013 MoPub. All rights reserved.
+//  Copyright 2018 Twitter, Inc.
+//  Licensed under the MoPub SDK License Agreement
+//  http://www.mopub.com/legal/sdk-license-agreement/
 //
 
 #import "MPBannerAdManager.h"
 #import "MPAdServerURLBuilder.h"
+#import "MPAdTargeting.h"
 #import "MPCoreInstanceProvider.h"
 #import "MPBannerAdManagerDelegate.h"
 #import "MPError.h"
@@ -25,6 +27,7 @@
 @property (nonatomic, strong) MPBaseBannerAdapter *requestingAdapter;
 @property (nonatomic, strong) UIView *requestingAdapterAdContentView;
 @property (nonatomic, strong) MPAdConfiguration *requestingConfiguration;
+@property (nonatomic, strong) MPAdTargeting *targeting;
 @property (nonatomic, strong) NSMutableArray<MPAdConfiguration *> *remainingConfigurations;
 @property (nonatomic, strong) MPTimer *refreshTimer;
 @property (nonatomic, assign) BOOL adActionInProgress;
@@ -94,7 +97,7 @@
     return self.communicator.loading || self.requestingAdapter;
 }
 
-- (void)loadAd
+- (void)loadAdWithTargeting:(MPAdTargeting *)targeting
 {
     if (!self.hasRequestedAtLeastOneAd) {
         self.hasRequestedAtLeastOneAd = YES;
@@ -105,6 +108,7 @@
         return;
     }
 
+    self.targeting = targeting;
     [self loadAdWithURL:nil];
 }
 
@@ -162,9 +166,9 @@
     [self.communicator cancel];
 
     URL = (URL) ? URL : [MPAdServerURLBuilder URLWithAdUnitID:[self.delegate adUnitId]
-                                                     keywords:[self.delegate keywords]
-                                             userDataKeywords:[self.delegate userDataKeywords]
-                                                     location:[self.delegate location]];
+                                                     keywords:self.targeting.keywords
+                                             userDataKeywords:self.targeting.userDataKeywords
+                                                     location:self.targeting.location];
 
     [self.communicator loadURL:URL];
 }
@@ -196,7 +200,7 @@
 - (void)refreshTimerDidFire
 {
     if (!self.loading && self.automaticallyRefreshesContents) {
-        [self loadAd];
+        [self loadAdWithTargeting:self.targeting];
     }
 }
 
@@ -245,7 +249,7 @@
         return;
     }
 
-    [self.requestingAdapter _getAdWithConfiguration:configuration containerSize:self.delegate.containerSize];
+    [self.requestingAdapter _getAdWithConfiguration:configuration targeting:self.targeting containerSize:self.delegate.containerSize];
 }
 
 #pragma mark - <MPAdServerCommunicatorDelegate>
@@ -302,7 +306,7 @@
 
 - (CLLocation *)location
 {
-    return [self.delegate location];
+    return self.targeting.location;
 }
 
 - (BOOL)requestingAdapterIsReadyToBePresented
@@ -382,7 +386,7 @@
         if (self.requestingAdapterIsReadyToBePresented) {
             [self presentRequestingAdapter];
         } else {
-            [self loadAd];
+            [self loadAdWithTargeting:self.targeting];
         }
     }
 }

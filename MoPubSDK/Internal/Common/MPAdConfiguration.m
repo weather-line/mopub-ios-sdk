@@ -1,8 +1,9 @@
 //
 //  MPAdConfiguration.m
-//  MoPub
 //
-//  Copyright (c) 2012 MoPub, Inc. All rights reserved.
+//  Copyright 2018 Twitter, Inc.
+//  Licensed under the MoPub SDK License Agreement
+//  http://www.mopub.com/legal/sdk-license-agreement/
 //
 
 #import "MPAdConfiguration.h"
@@ -29,16 +30,16 @@ NSString * const kAdTypeMetadataKey = @"x-adtype";
 NSString * const kAdUnitWarmingUpMetadataKey = @"x-warmup";
 NSString * const kClickthroughMetadataKey = @"x-clickthrough";
 NSString * const kCreativeIdMetadataKey = @"x-creativeid";
-NSString * const kCustomSelectorMetadataKey = @"x-customselector";
 NSString * const kCustomEventClassNameMetadataKey = @"x-custom-event-class-name";
 NSString * const kCustomEventClassDataMetadataKey = @"x-custom-event-class-data";
 NSString * const kNextUrlMetadataKey = @"x-next-url";
 NSString * const kBeforeLoadUrlMetadataKey = @"x-before-load-url";
 NSString * const kAfterLoadUrlMetadataKey = @"x-after-load-url";
+NSString * const kAfterLoadSuccessUrlMetadataKey = @"x-after-load-success-url";
+NSString * const kAfterLoadFailureUrlMetadataKey = @"x-after-load-fail-url";
 NSString * const kHeightMetadataKey = @"x-height";
 NSString * const kImpressionTrackerMetadataKey = @"x-imptracker"; // Deprecated; "imptrackers" if available
 NSString * const kImpressionTrackersMetadataKey = @"imptrackers";
-NSString * const kLaunchpageMetadataKey = @"x-launchpage";
 NSString * const kNativeSDKParametersMetadataKey = @"x-nativeparams";
 NSString * const kNetworkTypeMetadataKey = @"x-networktype";
 NSString * const kRefreshTimeMetadataKey = @"x-refreshtime";
@@ -101,13 +102,17 @@ NSString * const kAdvancedBiddingMarkupMetadataKey = @"adm";
 @property (nonatomic, copy) NSString *adResponseHTMLString;
 @property (nonatomic, strong, readwrite) NSArray *availableRewards;
 @property (nonatomic) MOPUBDisplayAgentType clickthroughExperimentBrowserAgent;
-@property (nonatomic, copy) NSString *afterLoadUrlWithMacros;
+
+@property (nonatomic, copy) NSArray <NSString *> *afterLoadUrlsWithMacros;
+@property (nonatomic, copy) NSArray <NSString *> *afterLoadSuccessUrlsWithMacros;
+@property (nonatomic, copy) NSArray <NSString *> *afterLoadFailureUrlsWithMacros;
 
 - (MPAdType)adTypeFromMetadata:(NSDictionary *)metadata;
 - (NSString *)networkTypeFromMetadata:(NSDictionary *)metadata;
 - (NSTimeInterval)refreshIntervalFromMetadata:(NSDictionary *)metadata;
 - (NSDictionary *)dictionaryFromMetadata:(NSDictionary *)metadata forKey:(NSString *)key;
 - (NSURL *)URLFromMetadata:(NSDictionary *)metadata forKey:(NSString *)key;
+- (NSArray <NSURL *> *)URLsFromMetadata:(NSDictionary *)metadata forKey:(NSString *)key;
 - (Class)setUpCustomEventClassFromMetadata:(NSDictionary *)metadata;
 
 @end
@@ -136,16 +141,15 @@ NSString * const kAdvancedBiddingMarkupMetadataKey = @"adm";
         self.nextURL = [self URLFromMetadata:metadata
                                          forKey:kNextUrlMetadataKey];
         self.beforeLoadURL = [self URLFromMetadata:metadata forKey:kBeforeLoadUrlMetadataKey];
-        self.afterLoadUrlWithMacros = [metadata objectForKey:kAfterLoadUrlMetadataKey];
-        self.interceptURLPrefix = [self URLFromMetadata:metadata
-                                                forKey:kLaunchpageMetadataKey];
+        self.afterLoadUrlsWithMacros = [self URLStringsFromMetadata:metadata forKey:kAfterLoadUrlMetadataKey];
+        self.afterLoadSuccessUrlsWithMacros = [self URLStringsFromMetadata:metadata forKey:kAfterLoadSuccessUrlMetadataKey];
+        self.afterLoadFailureUrlsWithMacros = [self URLStringsFromMetadata:metadata forKey:kAfterLoadFailureUrlMetadataKey];
 
         self.refreshInterval = [self refreshIntervalFromMetadata:metadata];
         self.adTimeoutInterval = [self timeIntervalFromMsmetadata:metadata forKey:kAdTimeoutMetadataKey];
 
         self.nativeSDKParameters = [self dictionaryFromMetadata:metadata
                                                         forKey:kNativeSDKParametersMetadataKey];
-        self.customSelectorName = [metadata objectForKey:kCustomSelectorMetadataKey];
 
         self.orientationType = [self orientationTypeFromMetadata:metadata];
 
@@ -184,27 +188,13 @@ NSString * const kAdvancedBiddingMarkupMetadataKey = @"adm";
         self.impressionMinVisiblePixels = [[self adAmountFromMetadata:metadata key:kBannerImpressionMinPixelMetadataKey] floatValue];
 
         // Organize impression tracking URLs
-        // Get array of URL strings from the JSON
-        NSArray <NSString *> * urlStrings = metadata[kImpressionTrackersMetadataKey];
+        NSArray <NSURL *> * URLs = [self URLsFromMetadata:metadata forKey:kImpressionTrackersMetadataKey];
         // Check to see if the array actually contains URLs
-        if (urlStrings.count > 0) {
-            // Convert the strings into NSURLs and save in a new array
-            NSMutableArray <NSURL *> * urls = [NSMutableArray arrayWithCapacity:urlStrings.count];
-            for (NSString * urlString in urlStrings) {
-                // @c URLWithString may return @c nil, so check before appending to the array
-                NSURL * url = [NSURL URLWithString:urlString];
-                if (url != nil) {
-                    [urls addObject:url];
-                }
-            }
-            self.impressionTrackingURLs = urls;
+        if (URLs.count > 0) {
+            self.impressionTrackingURLs = URLs;
         } else {
             // If the array does not contain URLs, take the old `x-imptracker` URL and save that into an array instead.
-            // URL may be @c nil, so check before inserting into the array.
-            NSURL * impressionTrackingURL = [self URLFromMetadata:metadata forKey:kImpressionTrackerMetadataKey];
-            if (impressionTrackingURL != nil) {
-                self.impressionTrackingURLs = @[impressionTrackingURL];
-            }
+            self.impressionTrackingURLs = [self URLsFromMetadata:metadata forKey:kImpressionTrackerMetadataKey];
         }
 
         // rewarded video
@@ -327,40 +317,69 @@ NSString * const kAdvancedBiddingMarkupMetadataKey = @"adm";
     return _adResponseHTMLString;
 }
 
-- (NSString *)clickDetectionURLPrefix
+- (NSArray <NSURL *> *)afterLoadUrlsWithLoadDuration:(NSTimeInterval)duration loadResult:(MPAfterLoadResult)result
 {
-    return self.interceptURLPrefix.absoluteString ? self.interceptURLPrefix.absoluteString : @"";
-}
+    NSArray <NSString *> * afterLoadUrls = [self concatenateBaseUrlArray:self.afterLoadUrlsWithMacros
+                                                    withConditionalArray:(result == MPAfterLoadResultAdLoaded ? self.afterLoadSuccessUrlsWithMacros : self.afterLoadFailureUrlsWithMacros)];
 
-- (NSURL *)afterLoadUrlWithLoadDuration:(NSTimeInterval)duration loadResult:(MPAfterLoadResult)result
-{
-    // No URL to generate
-    if (self.afterLoadUrlWithMacros == nil || self.afterLoadUrlWithMacros.length == 0) {
+    // No URLs to generate
+    if (afterLoadUrls == nil || afterLoadUrls.count == 0) {
         return nil;
     }
 
-    // Generate the ad server value from the enumeration. If the result type failed to
-    // match, we should not process this any further.
-    NSString * resultString = nil;
-    switch (result) {
-        case MPAfterLoadResultError: resultString = @"error"; break;
-        case MPAfterLoadResultTimeout: resultString = @"timeout"; break;
-        case MPAfterLoadResultAdLoaded: resultString = @"ad_loaded"; break;
-        case MPAfterLoadResultMissingAdapter: resultString = @"missing_adapter"; break;
-        default: return nil;
+    NSMutableArray * urls = [NSMutableArray arrayWithCapacity:afterLoadUrls.count];
+
+    for (NSString * urlString in afterLoadUrls) {
+        // Skip if the URL length is 0
+        if (urlString.length == 0) {
+            continue;
+        }
+
+        // Generate the ad server value from the enumeration. If the result type failed to
+        // match, we should not process this any further.
+        NSString * resultString = nil;
+        switch (result) {
+            case MPAfterLoadResultError: resultString = @"error"; break;
+            case MPAfterLoadResultTimeout: resultString = @"timeout"; break;
+            case MPAfterLoadResultAdLoaded: resultString = @"ad_loaded"; break;
+            case MPAfterLoadResultMissingAdapter: resultString = @"missing_adapter"; break;
+            default: return nil;
+        }
+
+        // Convert the duration to milliseconds
+        NSString * durationMs = [NSString stringWithFormat:@"%llu", (unsigned long long)(duration * 1000)];
+
+        // Replace the macros
+        NSString * expandedUrl = [urlString stringByReplacingOccurrencesOfString:AFTER_LOAD_DURATION_MACRO withString:durationMs];
+        expandedUrl = [expandedUrl stringByReplacingOccurrencesOfString:AFTER_LOAD_RESULT_MACRO withString:resultString];
+
+        // Add to array (@c URLWithString may return @c nil, so check before appending to the array)
+        NSURL * url = [NSURL URLWithString:expandedUrl];
+        if (url != nil) {
+            [urls addObject:url];
+        }
     }
 
-    // Convert the duration to milliseconds
-    NSString * durationMs = [NSString stringWithFormat:@"%llu", (unsigned long long)(duration * 1000)];
-
-    // Replace the macros
-    NSString * expandedUrl = [self.afterLoadUrlWithMacros stringByReplacingOccurrencesOfString:AFTER_LOAD_DURATION_MACRO withString:durationMs];
-    expandedUrl = [expandedUrl stringByReplacingOccurrencesOfString:AFTER_LOAD_RESULT_MACRO withString:resultString];
-
-    return [NSURL URLWithString:expandedUrl];
+    return urls.count > 0 ? urls : nil;
 }
 
 #pragma mark - Private
+
+- (NSArray *)concatenateBaseUrlArray:(NSArray *)baseArray withConditionalArray:(NSArray *)conditionalArray {
+    if (baseArray == nil && conditionalArray == nil) {
+        return nil;
+    }
+
+    if (baseArray == nil) {
+        return conditionalArray;
+    }
+
+    if (conditionalArray == nil) {
+        return baseArray;
+    }
+
+    return [baseArray arrayByAddingObjectsFromArray:conditionalArray];
+}
 
 - (MPAdType)adTypeFromMetadata:(NSDictionary *)metadata
 {
@@ -392,6 +411,74 @@ NSString * const kAdvancedBiddingMarkupMetadataKey = @"adm";
 {
     NSString *URLString = [metadata objectForKey:key];
     return URLString ? [NSURL URLWithString:URLString] : nil;
+}
+
+/**
+ Reads the value at key @c key from dictionary @c metadata. If the value is a @c NSString that is convertable to
+ @c NSURL, it will be converted into an @c NSURL, inserted into an array, and returned. If the value is a @c NSArray,
+ each @c NSString in the array that is convertable to @c NSURL will be converted and all returned in an array, with all
+ other objects scrubbed. If the value from @c metadata is @c nil, not an @c NSString, not an @c NSArray, an @c NSString
+ that cannot be converted to @c NSURL, or an @c NSArray that does not contain NSURL-convertable strings, this method
+ will return @c nil.
+ @remark This method converts all @c NSStrings into @c NSURLs, where possible. If this behavior is not desired,
+ use @c URLStringsFromMetadata:forkey: instead.
+ @param metadata the @c NSDictionary to read from
+ @param key the @c the key to look up in @c metadata
+ @return @c NSArray of @c NSURL contained at key @c key, or @c nil
+ */
+- (NSArray <NSURL *> *)URLsFromMetadata:(NSDictionary *)metadata forKey:(NSString *)key {
+    NSArray <NSString *> * URLStrings = [self URLStringsFromMetadata:metadata forKey:key];
+    if (URLStrings == nil) {
+        return nil;
+    }
+
+    // Convert the strings into NSURLs and save in a new array
+    NSMutableArray <NSURL *> * URLs = [NSMutableArray arrayWithCapacity:URLStrings.count];
+    for (NSString * URLString in URLStrings) {
+        // @c URLWithString may return @c nil, so check before appending to the array
+        NSURL * URL = [NSURL URLWithString:URLString];
+        if (URL != nil) {
+            [URLs addObject:URL];
+        }
+    }
+
+    return URLs.count > 0 ? URLs : nil;
+}
+
+/**
+ Reads the value at key @c key from dictionary @c metadata. If the value is a @c NSString, it will be inserted into
+ an array and returned. If the value is a @c NSArray, the @c NSStrings contained in that array will be all be returned
+ in an array, with any object that is not an @c NSString scrubbed. If the value from @c metadata is @c nil, not an
+ @c NSString, not an @c NSArray, or an @c NSArray that does not contain strings, this method will return @c nil.
+ @remark This method does not convert the @c NSStrings into @c NSURLs. Use @c URLsFromMetadata:forKey: for that instead.
+ @param metadata the @c NSDictionary to read from
+ @param key the @c the key to look up in @c metadata
+ @return @c NSArray of @c NSStrings contained at key @c key, or @c nil
+ */
+- (NSArray <NSString *> *)URLStringsFromMetadata:(NSDictionary *)metadata forKey:(NSString *)key {
+    NSObject * value = metadata[key];
+
+    if (value == nil) {
+        return nil;
+    }
+
+    if ([value isKindOfClass:[NSString class]]) {
+        NSString * string = (NSString *)value;
+        return string.length > 0 ? @[string] : nil;
+    }
+
+    if ([value isKindOfClass:[NSArray class]]) {
+        NSArray * objects = (NSArray *)value;
+        NSMutableArray <NSString *> * URLStrings = [NSMutableArray arrayWithCapacity:objects.count];
+        for (NSObject * object in objects) {
+            if ([object isKindOfClass:[NSString class]]) {
+                [URLStrings addObject:(NSString *)object];
+            }
+        }
+        return URLStrings.count > 0 ? URLStrings : nil;
+    }
+
+    return nil;
 }
 
 - (NSDictionary *)dictionaryFromMetadata:(NSDictionary *)metadata forKey:(NSString *)key

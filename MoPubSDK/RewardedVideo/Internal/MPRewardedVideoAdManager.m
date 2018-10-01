@@ -1,8 +1,9 @@
 //
 //  MPRewardedVideoAdManager.m
-//  MoPubSDK
 //
-//  Copyright (c) 2015 MoPub. All rights reserved.
+//  Copyright 2018 Twitter, Inc.
+//  Licensed under the MoPub SDK License Agreement
+//  http://www.mopub.com/legal/sdk-license-agreement/
 //
 
 #import "MPRewardedVideoAdManager.h"
@@ -78,7 +79,7 @@
     return [self.adapter hasAdAvailable];
 }
 
-- (void)loadRewardedVideoAdWithKeywords:(NSString *)keywords userDataKeywords:(NSString *)userDataKeywords location:(CLLocation *)location customerId:(NSString *)customerId
+- (void)loadRewardedVideoAdWithCustomerId:(NSString *)customerId targeting:(MPAdTargeting *)targeting
 {
     // We will just tell the delegate that we have loaded an ad if we already have one ready. However, if we have already
     // played a video for this ad manager, we will go ahead and request another ad from the server so we aren't potentially
@@ -91,10 +92,11 @@
         // This has multiple behaviors. For ads that require us to set the customID: (outside of load), this will overwrite the ad's previously
         // set customerId. Other ads require customerId on presentation in which we will use this new id coming in when presenting the ad.
         self.customerId = customerId;
+        self.targeting = targeting;
         [self loadAdWithURL:[MPAdServerURLBuilder URLWithAdUnitID:self.adUnitID
-                                                         keywords:keywords
-                                                 userDataKeywords:userDataKeywords
-                                                         location:location]];
+                                                         keywords:targeting.keywords
+                                                 userDataKeywords:targeting.userDataKeywords
+                                                         location:targeting.location]];
     }
 }
 
@@ -207,7 +209,7 @@
     }
 
     self.adapter = adapter;
-    [self.adapter getAdWithConfiguration:configuration];
+    [self.adapter getAdWithConfiguration:configuration targeting:self.targeting];
 }
 
 #pragma mark - MPAdServerCommunicatorDelegate

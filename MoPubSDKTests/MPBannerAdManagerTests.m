@@ -1,8 +1,9 @@
 //
 //  MPBannerAdManagerTests.m
-//  MoPubSDKTests
 //
-//  Copyright © 2018 MoPub. All rights reserved.
+//  Copyright 2018 Twitter, Inc.
+//  Licensed under the MoPub SDK License Agreement
+//  http://www.mopub.com/legal/sdk-license-agreement/
 //
 
 #import <XCTest/XCTest.h>
@@ -10,7 +11,11 @@
 #import "MPBannerAdManager.h"
 #import "MPBannerAdManager+Testing.h"
 #import "MPBannerAdManagerDelegateHandler.h"
+#import "MPAdTargeting.h"
+#import "MPBannerCustomEventAdapter.h"
+#import "MPBannerCustomEventAdapter+Testing.h"
 #import "MPMockAdServerCommunicator.h"
+#import "MPMockBannerCustomEvent.h"
 
 static const NSTimeInterval kDefaultTimeout = 10;
 
@@ -229,5 +234,47 @@ static const NSTimeInterval kDefaultTimeout = 10;
     XCTAssert([communicator.lastUrlLoaded.absoluteString isEqualToString:@"http://ads.mopub.com/m/failURL"]);
 }
 
+#pragma mark - Local Extras
+
+- (void)testLocalExtrasInCustomEvent {
+    XCTestExpectation * expectation = [self expectationWithDescription:@"Wait for banner load"];
+
+    MPBannerAdManagerDelegateHandler * handler = [MPBannerAdManagerDelegateHandler new];
+    handler.didLoadAd = ^{
+        [expectation fulfill];
+    };
+    handler.didFailToLoadAd = ^{
+        XCTFail(@"Encountered an unexpected load failure");
+        [expectation fulfill];
+    };
+
+    // Generate the ad configurations
+    MPAdConfiguration * bannerThatShouldLoad = [MPAdConfigurationFactory defaultBannerConfigurationWithCustomEventClassName:@"MPMockBannerCustomEvent"];
+    NSArray * configurations = @[bannerThatShouldLoad];
+
+    MPBannerAdManager * manager = [[MPBannerAdManager alloc] initWithDelegate:handler];
+    MPMockAdServerCommunicator * communicator = [[MPMockAdServerCommunicator alloc] initWithDelegate:manager];
+    communicator.mockConfigurationsResponse = configurations;
+    manager.communicator = communicator;
+
+    MPAdTargeting * targeting = [[MPAdTargeting alloc] init];
+    targeting.localExtras = @{ @"testing": @"YES" };
+    [manager loadAdWithTargeting:targeting];
+
+    [self waitForExpectationsWithTimeout:kDefaultTimeout handler:^(NSError * _Nullable error) {
+        if (error != nil) {
+            XCTFail(@"Timed out");
+        }
+    }];
+
+    MPBannerCustomEventAdapter * adapter = (MPBannerCustomEventAdapter *)manager.onscreenAdapter;
+    MPMockBannerCustomEvent * customEvent = (MPMockBannerCustomEvent *)adapter.bannerCustomEvent;
+    XCTAssertNotNil(customEvent);
+
+    NSDictionary * localExtras = customEvent.localExtras;
+    XCTAssertNotNil(localExtras);
+    XCTAssert([localExtras[@"testing"] isEqualToString:@"YES"]);
+    XCTAssertTrue(customEvent.isLocalExtrasAvailableAtRequest);
+}
 
 @end

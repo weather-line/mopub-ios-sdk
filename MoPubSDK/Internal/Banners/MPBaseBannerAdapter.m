@@ -1,9 +1,9 @@
 //
 //  MPBaseBannerAdapter.m
-//  MoPub
 //
-//  Created by Nafis Jamal on 1/19/11.
-//  Copyright 2011 MoPub, Inc. All rights reserved.
+//  Copyright 2018 Twitter, Inc.
+//  Licensed under the MoPub SDK License Agreement
+//  http://www.mopub.com/legal/sdk-license-agreement/
 //
 
 #import "MPBaseBannerAdapter.h"
@@ -50,20 +50,18 @@
 
 #pragma mark - Requesting Ads
 
-- (void)getAdWithConfiguration:(MPAdConfiguration *)configuration containerSize:(CGSize)size
+- (void)getAdWithConfiguration:(MPAdConfiguration *)configuration targeting:(MPAdTargeting *)targeting containerSize:(CGSize)size
 {
     // To be implemented by subclasses.
     [self doesNotRecognizeSelector:_cmd];
 }
 
-- (void)_getAdWithConfiguration:(MPAdConfiguration *)configuration containerSize:(CGSize)size
+- (void)_getAdWithConfiguration:(MPAdConfiguration *)configuration targeting:(MPAdTargeting *)targeting containerSize:(CGSize)size
 {
     self.configuration = configuration;
 
     [self startTimeoutTimer];
-
-    MPBaseBannerAdapter *strongSelf = self;
-    [strongSelf getAdWithConfiguration:configuration containerSize:size];
+    [self getAdWithConfiguration:configuration targeting:targeting containerSize:size];
 }
 
 - (void)didStopLoading
