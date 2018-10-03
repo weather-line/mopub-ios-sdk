@@ -26,7 +26,6 @@ AdNetworkSupport/**/SDK/*.framework
 AdNetworkSupport/**/SDK/*.embeddedframework
 AdNetworkSupport/Vungle/VungleSDK.embeddedframework/
 AdNetworkSupport/Unity/SDK/UnityAds.bundle/
-mopub-ios-sdk.podspec
 Scripts/*
 !Scripts/mraid_build.sh
 !Scripts/build_scripts/mraid_build.sh
