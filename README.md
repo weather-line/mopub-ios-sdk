@@ -10,8 +10,6 @@ You can find integration documentation on our [wiki](https://github.com/mopub/mo
 
 To file an issue with our team, email [support@mopub.com](mailto:support@mopub.com).
 
-**Please Note: We no longer accept GitHub Issues**
-
 ## New Pull Requests?
 
 Thank you for submitting pull requests to the MoPub iOS GitHub repository. Our team regularly monitors and investigates all submissions for inclusion in our official SDK releases. Please note that MoPub does not directly merge these pull requests at this time. Please reach out to your account team or [support@mopub.com](mailto:support@mopub.com) if you have further questions.
