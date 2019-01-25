@@ -9,6 +9,8 @@ One line summary of the issue here
 
 #### Device model and OS Version:
 
+#### Xcode Version:
+
 #### Ad Unit IDs used in reproducing the issue:
 
 #### Steps to reproduce the behavior:

@@ -1,3 +1,14 @@
+## Version 5.5.0 (January 28, 2019)
+- **Features**
+  - Advanced Bidding automatically initializes
+  - GDPR legitimate interest API now available; publishers may opt into allowing supported networks to collect user information on the basis of legitimate interest.
+  - We now distribute separate frameworks for simulator, device, and universal architectures
+
+- **Bug Fixes**
+  - Fixed rewarded video state occasionally not being reset correctly upon load failure
+  - Tweaked MRAID `ready` event timing so that it's in-spec
+  - Canary test app improvements and bug fixes
+
 ## Version 5.4.1 (November 28, 2018)
 - **Bug Fixes**
   - Changed the MoPubSampleApp+Framework target to MoPubSampleApp in the Objective-C Sample App.
@@ -13,7 +24,7 @@
   - HTTP error codes now include the localized error description.
   - Added missing mraid.js file protections when showing MRAID ads.
   - Fixed native video crash.
-  - Fixed native ad timeout timer invalidation. 
+  - Fixed native ad timeout timer invalidation.
 
 ## Version 5.3.0 (August 15, 2018)
 - **Features**
