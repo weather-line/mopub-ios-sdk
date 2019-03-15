@@ -121,6 +121,16 @@ const NSTimeInterval kDefaultCountdownTimerIntervalInSeconds = 30;
     self.timerView = [[MPCountdownTimerView alloc] initWithFrame:viewController.view.bounds duration:self.countdownDuration];
     [self.interstitial.view addSubview:self.timerView];
 
+    if (@available(iOS 9.0, *)) {
+        NSArray * constraints = @[[self.timerView.leftAnchor constraintEqualToAnchor:self.interstitial.view.leftAnchor],
+                                  [self.timerView.rightAnchor constraintEqualToAnchor:self.interstitial.view.rightAnchor],
+                                  [self.timerView.topAnchor constraintEqualToAnchor:self.interstitial.view.topAnchor],
+                                  [self.timerView.bottomAnchor constraintEqualToAnchor:self.interstitial.view.bottomAnchor]
+                                  ];
+        [NSLayoutConstraint activateConstraints:constraints];
+        self.timerView.translatesAutoresizingMaskIntoConstraints = NO;
+    }
+
     [self.timerView startWithTimerCompletion:^(BOOL hasElapsed) {
         __typeof__(self) strongSelf = weakSelf;
         if (strongSelf != nil) {

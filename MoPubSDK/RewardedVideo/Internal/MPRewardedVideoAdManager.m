@@ -242,6 +242,14 @@
     [self.delegate rewardedVideoDidFailToLoadForAdManager:self error:error];
 }
 
+- (MPAdType)adTypeForAdServerCommunicator:(MPAdServerCommunicator *)adServerCommunicator {
+    return MPAdTypeFullscreen;
+}
+
+- (NSString *)adUnitIDForAdServerCommunicator:(MPAdServerCommunicator *)adServerCommunicator {
+    return self.adUnitID;
+}
+
 #pragma mark - MPRewardedVideoAdapterDelegate
 
 - (id<MPMediationSettingsProtocol>)instanceMediationSettingsForClass:(Class)aClass

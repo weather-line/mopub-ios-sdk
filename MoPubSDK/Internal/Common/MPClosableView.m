@@ -110,6 +110,7 @@ CGRect MPClosableViewCustomCloseButtonFrame(CGSize size, MPClosableViewCloseButt
 
 - (void)layoutSubviews
 {
+    [super layoutSubviews];
     if (@available(iOS 11, *)) {
         self.closeButton.translatesAutoresizingMaskIntoConstraints = NO;
 

@@ -106,6 +106,16 @@ protocol AdDataSource {
     var adContainerView: UIView? { get }
     
     /**
+     Queries if the data source has an ad loaded.
+     */
+    var isAdLoaded: Bool { get }
+    
+    /**
+     Queries if the data source currently requesting an ad.
+     */
+    var isAdLoading: Bool { get }
+    
+    /**
      Retrieves the display status for the event.
      - Parameter event: Status event.
      - Returns: A tuple containing the status display title, optional message, and highlighted state.

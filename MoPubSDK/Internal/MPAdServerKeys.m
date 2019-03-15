@@ -42,6 +42,8 @@ NSString * const kLocationLatitudeLongitudeKey     = @"ll";
 NSString * const kLocationHorizontalAccuracy       = @"lla";
 NSString * const kLocationIsFromSDK                = @"llsdk";
 NSString * const kLocationLastUpdatedMilliseconds  = @"llf";
+NSString * const kBackoffMsKey                     = @"backoff_ms";
+NSString * const kBackoffReasonKey                 = @"backoff_reason";
 
 #pragma mark - Ad Server Response Keys
 NSString * const kEnableDebugLogging               = @"enable_debug_logging";

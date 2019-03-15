@@ -138,6 +138,13 @@
     }
 }
 
+- (void)resumeRefreshTimer
+{
+    if ([self.refreshTimer isValid]) {
+        [self.refreshTimer resume];
+    }
+}
+
 - (void)stopAutomaticallyRefreshingContents
 {
     self.automaticallyRefreshesContents = NO;
@@ -215,17 +222,6 @@
 - (void)fetchAdWithConfiguration:(MPAdConfiguration *)configuration {
     MPLogInfo(@"Banner ad view is fetching ad network type: %@", configuration.networkType);
 
-    if (configuration.adType == MPAdTypeUnknown) {
-        [self didFailToLoadAdapterWithError:[NSError errorWithCode:MOPUBErrorServerError]];
-        return;
-    }
-
-    if (configuration.adType == MPAdTypeInterstitial) {
-        MPLogInfo(@"Could not load ad: banner object received an interstitial ad unit ID.");
-        [self didFailToLoadAdapterWithError:[NSError errorWithCode:MOPUBErrorAdapterInvalid]];
-        return;
-    }
-
     if (configuration.adUnitWarmingUp) {
         MPLogInfo(kMPWarmingUpErrorLogFormatWithAdUnitID, self.delegate.adUnitId);
         [self didFailToLoadAdapterWithError:[NSError errorWithCode:MOPUBErrorAdUnitWarmingUp]];
@@ -280,6 +276,14 @@
 {
     [self.delegate managerDidFailToLoadAd];
     [self scheduleRefreshTimer];
+}
+
+- (MPAdType)adTypeForAdServerCommunicator:(MPAdServerCommunicator *)adServerCommunicator {
+    return MPAdTypeInline;
+}
+
+- (NSString *)adUnitIDForAdServerCommunicator:(MPAdServerCommunicator *)adServerCommunicator {
+    return [self.delegate adUnitId];
 }
 
 #pragma mark - <MPBannerAdapterDelegate>
@@ -428,6 +432,20 @@
         MPLogAdEvent(MPLogEvent.adWillLeaveApplication, self.delegate.banner.adUnitId);
         [self.delegate userWillLeaveApplication];
     }
+}
+
+- (void)adWillExpandForAdapter:(MPBaseBannerAdapter *)adapter
+{
+    // While the banner ad is in an expanded state, the refresh timer should be paused
+    // since the user is interacting with the ad experience.
+    [self pauseRefreshTimer];
+}
+
+- (void)adDidCollapseForAdapter:(MPBaseBannerAdapter *)adapter
+{
+    // Once the banner ad is collapsed back into its default state, the refresh timer
+    // should be resumed to queue up the next ad.
+    [self resumeRefreshTimer];
 }
 
 @end

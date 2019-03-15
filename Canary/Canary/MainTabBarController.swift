@@ -27,6 +27,7 @@ class MainTabBarController: UITabBarController {
         super.viewDidLoad()
         
         // Configure the notification label
+        notificationButton.accessibilityIdentifier = AccessibilityIdentifier.notificationButton
         notificationButton.alpha = 0.0
         notificationButton.contentEdgeInsets = UIEdgeInsets.init(top: 5, left: 10, bottom: 5, right: 10)
         notificationButton.addTarget(self, action: #selector(self.dismissNotification), for: .touchUpInside)

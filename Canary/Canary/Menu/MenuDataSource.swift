@@ -28,6 +28,7 @@ class MenuDataSource {
     // MARK: - Initialization
     
     init() {
+        add(menu: AdapterVersionsMenuDataSource())
         add(menu: LogingLevelMenuDataSource())
     }
     
@@ -46,6 +47,13 @@ class MenuDataSource {
         sources[menu.title] = menu
     }
     
+    /**
+     Updates all data sources if needed.
+     */
+    func updateIfNeeded() {
+        sources.values.forEach({ $0.updateIfNeeded() })
+    }
+    
     // MARK: - Accessors
     
     func cell(forIndexPath indexPath: IndexPath, inTableView tableView: UITableView) -> UITableViewCell {
@@ -60,12 +68,13 @@ class MenuDataSource {
         return sources[sections[index]]?.count ?? 0
     }
     
+    func canSelect(itemAtIndexPath indexPath: IndexPath, inTableView tableView: UITableView) -> Bool {
+        return sources[sections[indexPath.section]]?.canSelect(itemAt: indexPath.row, inTableView: tableView) ?? false
+    }
+    
     func didSelect(itemAtIndexPath indexPath: IndexPath, inTableView tableView: UITableView, presentingFrom viewController: UIViewController) -> Bool {
-        let canSelect = sources[sections[indexPath.section]]?.canSelect(itemAt: indexPath.row, inTableView: tableView) ?? false
-        if canSelect {
-            sources[sections[indexPath.section]]?.didSelect(itemAt: indexPath.row, inTableView: tableView, presentFrom: viewController)
-        }
+        let shouldCloseMenu: Bool = sources[sections[indexPath.section]]?.didSelect(itemAt: indexPath, inTableView: tableView, presentFrom: viewController) ?? true
         
-        return canSelect
+        return shouldCloseMenu
     }
 }

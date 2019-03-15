@@ -117,6 +117,16 @@ class BannerAdDataSource: NSObject, AdDataSource {
     }
     
     /**
+     Queries if the data source has an ad loaded.
+     */
+    private(set) var isAdLoaded: Bool = false
+    
+    /**
+     Queries if the data source currently requesting an ad.
+     */
+    private(set) var isAdLoading: Bool = false
+    
+    /**
      Retrieves the display status for the event.
      - Parameter event: Status event.
      - Returns: A tuple containing the status display title, optional message, and highlighted state.
@@ -151,6 +161,11 @@ class BannerAdDataSource: NSObject, AdDataSource {
     // MARK: - Ad Loading
     
     private func loadAd() {
+        guard !isAdLoading else {
+            return
+        }
+        
+        isAdLoading = true
         clearStatus { [weak self] in
             self?.delegate?.adPresentationTableView.reloadData()
         }
@@ -171,6 +186,8 @@ extension BannerAdDataSource: MPAdViewDelegate {
     }
     
     func adViewDidLoadAd(_ view: MPAdView!) {
+        isAdLoading = false
+        isAdLoaded = true
         setStatus(for: .didLoad) { [weak self] in
             if let strongSelf = self {
                 strongSelf.loadFailureReason = nil
@@ -180,6 +197,8 @@ extension BannerAdDataSource: MPAdViewDelegate {
     }
     
     func adViewDidFail(toLoadAd view: MPAdView!) {
+        isAdLoading = false
+        isAdLoaded = false
         setStatus(for: .didFailToLoad) { [weak self] in
             if let strongSelf = self {
                 // The banner load failure doesn't give back an error reason; assume clear response

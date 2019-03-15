@@ -16,6 +16,7 @@
 
 - (MPInterstitialAdController *)interstitialAdController;
 - (CLLocation *)location;
+- (NSString *)adUnitId;
 - (id)interstitialDelegate;
 - (void)managerDidLoadInterstitial:(MPInterstitialAdManager *)manager;
 - (void)manager:(MPInterstitialAdManager *)manager

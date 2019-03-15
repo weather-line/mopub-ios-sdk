@@ -85,3 +85,9 @@ NSString * const kNSErrorDomain = @"com.mopub.iossdk";
 }
 
 @end
+
+@implementation NSError (RateLimit)
++ (instancetype)tooManyRequests {
+    return [NSError errorWithCode:MOPUBErrorTooManyRequests localizedDescription:@"Could not perform ad request because too many requests have been sent to the server."];
+}
+@end

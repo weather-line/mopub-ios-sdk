@@ -307,6 +307,14 @@ static NSString * const kNativeAdErrorDomain = @"com.mopub.NativeAd";
     [self completeAdRequestWithAdObject:nil error:MPNativeAdNSErrorForNetworkConnectionError()];
 }
 
+- (MPAdType)adTypeForAdServerCommunicator:(MPAdServerCommunicator *)adServerCommunicator {
+    return MPAdTypeInline;
+}
+
+- (NSString *)adUnitIDForAdServerCommunicator:(MPAdServerCommunicator *)adServerCommunicator {
+    return self.adUnitIdentifier;
+}
+
 #pragma mark - <MPNativeCustomEventDelegate>
 
 - (void)nativeCustomEvent:(MPNativeCustomEvent *)event didLoadAd:(MPNativeAd *)adObject

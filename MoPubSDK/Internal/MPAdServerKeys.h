@@ -42,6 +42,8 @@ extern NSString * const kLocationLatitudeLongitudeKey;
 extern NSString * const kLocationHorizontalAccuracy;
 extern NSString * const kLocationIsFromSDK;
 extern NSString * const kLocationLastUpdatedMilliseconds;
+extern NSString * const kBackoffMsKey;
+extern NSString * const kBackoffReasonKey;
 
 #pragma mark - Ad Server Response Keys
 extern NSString * const kEnableDebugLogging;

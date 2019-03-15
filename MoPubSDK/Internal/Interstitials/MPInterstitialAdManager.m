@@ -167,13 +167,6 @@
         return;
     }
 
-    if (configuration.adType != MPAdTypeInterstitial) {
-        MPLogInfo(@"Could not load ad: interstitial object received a non-interstitial ad unit ID.");
-        self.loading = NO;
-        [self.delegate manager:self didFailToLoadInterstitialWithError:[NSError errorWithCode:MOPUBErrorAdapterInvalid]];
-        return;
-    }
-
     [self setUpAdapterWithConfiguration:configuration];
 }
 
@@ -201,6 +194,14 @@
     MPBaseInterstitialAdapter *adapter = [[MPInterstitialCustomEventAdapter alloc] initWithDelegate:self];
     self.adapter = adapter;
     [self.adapter _getAdWithConfiguration:configuration targeting:self.targeting];
+}
+
+- (MPAdType)adTypeForAdServerCommunicator:(MPAdServerCommunicator *)adServerCommunicator {
+    return MPAdTypeFullscreen;
+}
+
+- (NSString *)adUnitIDForAdServerCommunicator:(MPAdServerCommunicator *)adServerCommunicator {
+    return [self.delegate adUnitId];
 }
 
 #pragma mark - MPInterstitialAdapterDelegate

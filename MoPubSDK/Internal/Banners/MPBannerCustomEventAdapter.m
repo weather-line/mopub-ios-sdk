@@ -189,6 +189,16 @@
     }
 }
 
+- (void)bannerCustomEventWillExpandAd:(MPBannerCustomEvent *)event
+{
+    [self.delegate adWillExpandForAdapter:self];
+}
+
+- (void)bannerCustomEventDidCollapseAd:(MPBannerCustomEvent *)event
+{
+    [self.delegate adDidCollapseForAdapter:self];
+}
+
 #pragma mark - MPAdImpressionTimerDelegate
 
 - (void)adViewWillLogImpression:(UIView *)adView

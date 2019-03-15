@@ -132,7 +132,7 @@
     // Ignore server configuration size for interstitials. At this point our web view
     // is sized correctly for the device's screen. Currently the server sends down values for a 3.5in
     // screen, and they do not size correctly on a 4in screen.
-    if (configuration.adType != MPAdTypeInterstitial) {
+    if (configuration.adType != MPAdTypeFullscreen) {
         if ([configuration hasPreferredSize]) {
             CGRect frame = self.view.frame;
             frame.size.width = configuration.preferredSize.width;
@@ -319,7 +319,7 @@
 
 - (BOOL)isInterstitialAd
 {
-    return (self.configuration.adType == MPAdTypeInterstitial);
+    return (self.configuration.adType == MPAdTypeFullscreen);
 }
 
 - (void)initAdAlertManager

@@ -1,5 +1,5 @@
 //
-//  MPLogger.h
+//  MPBLogger.h
 //
 //  Copyright 2018-2019 Twitter, Inc.
 //  Licensed under the MoPub SDK License Agreement
@@ -7,17 +7,17 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "MPLogLevel.h"
+#import "MPBLogLevel.h"
 
 /**
  Objects which are capable of consuming log messages.
  */
-@protocol MPLogger <NSObject>
+@protocol MPBLogger <NSObject>
 
 /**
  Current logging level.
  */
-@property (nonatomic, readonly) MPLogLevel logLevel;
+@property (nonatomic, readonly) MPBLogLevel logLevel;
 
 /**
  Message to be logged.

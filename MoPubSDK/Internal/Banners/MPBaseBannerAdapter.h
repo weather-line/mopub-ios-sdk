@@ -83,4 +83,10 @@
  */
 - (void)adapter:(MPBaseBannerAdapter *)adapter didTrackImpressionForAd:(UIView *)ad;
 
+/**
+ * Fires when the banner ad is expanding/resizing and collapsing.
+ */
+- (void)adWillExpandForAdapter:(MPBaseBannerAdapter *)adapter;
+- (void)adDidCollapseForAdapter:(MPBaseBannerAdapter *)adapter;
+
 @end

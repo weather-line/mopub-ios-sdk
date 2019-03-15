@@ -178,9 +178,11 @@ extension AdTableViewController: UITableViewDataSource {
             return UITableViewCell()
         }
         
-        cell.name.text = "ID"
-        cell.adUnitId.text = dataSource.adUnit.id
+        cell.accessibilityIdentifier = dataSource.adUnit.id
         cell.accessoryType = .none
+        cell.adUnitId.text = dataSource.adUnit.id
+        cell.name.text = "ID"
+        
         return cell
     }
     
@@ -196,6 +198,7 @@ extension AdTableViewController: UITableViewDataSource {
             self?.dataSource.adUnit.keywords = keywords
         }
         
+        cell.accessibilityIdentifier = dataSource.adUnit.keywords
         return cell
     }
     
@@ -207,10 +210,11 @@ extension AdTableViewController: UITableViewDataSource {
             return UITableViewCell()
         }
         
-        cell.refresh(title: "User Data Keywords", text: dataSource.adUnit.keywords) { [weak self] (piiKeywords: String?) in
+        cell.refresh(title: "User Data Keywords", text: dataSource.adUnit.userDataKeywords) { [weak self] (piiKeywords: String?) in
             self?.dataSource.adUnit.userDataKeywords = piiKeywords
         }
         
+        cell.accessibilityIdentifier = dataSource.adUnit.userDataKeywords
         return cell
     }
     
@@ -226,6 +230,7 @@ extension AdTableViewController: UITableViewDataSource {
             self?.dataSource.adUnit.customData = customData
         }
         
+        cell.accessibilityIdentifier = dataSource.adUnit.customData
         return cell
     }
     
@@ -239,9 +244,11 @@ extension AdTableViewController: UITableViewDataSource {
             return UITableViewCell()
         }
         
+        let isAdLoading = dataSource.isAdLoading
         let loadHandler = dataSource.actionHandlers[.load]
         let showHandler = dataSource.actionHandlers[.show]
-        cell.refresh(loadAdHandler: loadHandler, showAdHandler: showHandler)
+        let showEnabled = dataSource.isAdLoaded
+        cell.refresh(isAdLoading: isAdLoading, loadAdHandler: loadHandler, showAdHandler: showHandler, showButtonEnabled: showEnabled)
         return cell
     }
     
@@ -261,6 +268,7 @@ extension AdTableViewController: UITableViewDataSource {
         let status = dataSource.status(for: event)
         cell.update(status: status.title, error: status.message, isHighlighted: status.isHighlighted)
         
+        cell.accessibilityIdentifier = status.title
         return cell
     }
 }

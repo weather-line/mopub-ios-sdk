@@ -11,12 +11,10 @@
 
 @class MPRewardedVideoReward;
 
-enum {
-    MPAdTypeUnknown = -1,
-    MPAdTypeBanner = 0,
-    MPAdTypeInterstitial = 1
+typedef NS_ENUM(NSUInteger, MPAdType) {
+    MPAdTypeInline,
+    MPAdTypeFullscreen
 };
-typedef NSUInteger MPAdType;
 
 typedef NS_ENUM(NSUInteger, MPAfterLoadResult) {
     MPAfterLoadResultMissingAdapter,
@@ -116,7 +114,10 @@ extern NSString * const kBannerImpressionMinPixelMetadataKey;
 @property (nonatomic) CGFloat impressionMinVisiblePixels;
 @property (nonatomic) BOOL visibleImpressionTrackingEnabled;
 
-- (id)initWithMetadata:(NSDictionary *)metadata data:(NSData *)data;
+- (instancetype)initWithMetadata:(NSDictionary *)metadata data:(NSData *)data adType:(MPAdType)adType;
+
+// Default @c init is unavailable
+- (instancetype)init NS_UNAVAILABLE;
 
 - (BOOL)hasPreferredSize;
 - (NSString *)adResponseHTMLString;

@@ -115,6 +115,16 @@ class NativeAdDataSource: BaseNativeAdDataSource, AdDataSource {
     }
     
     /**
+     Queries if the data source has an ad loaded.
+     */
+    private(set) var isAdLoaded: Bool = false
+    
+    /**
+     Queries if the data source currently requesting an ad.
+     */
+    private(set) var isAdLoading: Bool = false
+    
+    /**
      Retrieves the display status for the event.
      - Parameter event: Status event.
      - Returns: A tuple containing the status display title, optional message, and highlighted state.
@@ -198,6 +208,11 @@ class NativeAdDataSource: BaseNativeAdDataSource, AdDataSource {
     }
     
     private func loadAd() {
+        guard !isAdLoading else {
+            return
+        }
+        
+        isAdLoading = true
         clearStatus { [weak self] in
             self?.delegate?.adPresentationTableView.reloadData()
         }
@@ -207,8 +222,12 @@ class NativeAdDataSource: BaseNativeAdDataSource, AdDataSource {
         adRequest.targeting = targetting
         adRequest.start { [weak self] (request, nativeAd, error) in
             if let strongSelf = self {
+                // No longer loading regardless of result
+                strongSelf.isAdLoading = false
+                
                 // Error loading the native ad
                 guard error == nil else {
+                    strongSelf.isAdLoaded = false
                     strongSelf.loadFailureReason = error?.localizedDescription
                     strongSelf.setStatus(for: .didFailToLoad) { [weak self] in
                         self?.delegate?.adPresentationTableView.reloadData()
@@ -223,6 +242,7 @@ class NativeAdDataSource: BaseNativeAdDataSource, AdDataSource {
                     strongSelf.addToAdContainer(view: nativeAdView)
                 }
                 
+                strongSelf.isAdLoaded = true
                 strongSelf.setStatus(for: .didLoad) { [weak self] in
                     self?.delegate?.adPresentationTableView.reloadData()
                 }

@@ -16,7 +16,7 @@
 UIInterfaceOrientation MPInterfaceOrientation(void);
 UIWindow *MPKeyWindow(void);
 CGFloat MPStatusBarHeight(void);
-CGRect MPApplicationFrame(void);
+CGRect MPApplicationFrame(BOOL includeSafeAreaInsets);
 CGRect MPScreenBounds(void);
 CGSize MPScreenResolution(void);
 CGFloat MPDeviceScaleFactor(void);

@@ -134,6 +134,18 @@ class RewardedAdDataSource: NSObject, AdDataSource {
     }
     
     /**
+     Queries if the data source has an ad loaded.
+     */
+    var isAdLoaded: Bool {
+        return MPRewardedVideo.hasAdAvailable(forAdUnitID: adUnit.id)
+    }
+    
+    /**
+     Queries if the data source currently requesting an ad.
+     */
+    private(set) var isAdLoading: Bool = false
+    
+    /**
      Retrieves the display status for the event.
      - Parameter event: Status event.
      - Returns: A tuple containing the status display title, optional message, and highlighted state.
@@ -190,50 +202,13 @@ class RewardedAdDataSource: NSObject, AdDataSource {
             return
         }
         
-        // It's really a supported behavior to have a `UIPickerView` as a subview
-        // of `UIAlertController`. To make it work, the width of the alert view
-        // (as specified by `preferredContentSize`) should be the same as the
-        // picker view.
-        
         // Create the alert.
-        let alert: UIAlertController = UIAlertController(title: "Choose Reward", message: nil, preferredStyle: .actionSheet)
-        alert.isModalInPopover = true
-        alert.preferredContentSize = CGSize(width: 320, height: 250)
+        let alert = UIAlertController(title: "Choose Reward", message: nil, pickerViewDelegate: self, pickerViewDataSource: self, sender: sender)
         
         // Create the selection button.
         alert.addAction(UIAlertAction(title: "Select", style: .default, handler: { _ in
             complete()
         }))
-        
-        // Reward picker view
-        let pickerView: UIPickerView = UIPickerView(frame: CGRect(x: 0, y: 0, width: 320, height: 200))
-        pickerView.dataSource = self
-        pickerView.delegate = self
-        
-        // Configure popover appearance.
-        if let popoverController = alert.popoverPresentationController,
-            let showButton: UIButton = sender as? UIButton {
-            popoverController.sourceView = showButton
-            popoverController.sourceRect = showButton.bounds
-            popoverController.permittedArrowDirections = [.up, .down]
-        }
-        
-        alert.view.addSubview(pickerView)
-        
-        // The bottom constraint of the picker view is -44 from the bottom anchor of the
-        // alert view so that it doesn't cover the selection button. If the selection
-        // button is covered, it cannot be tapped.
-        let constraints: [NSLayoutConstraint] = [
-            pickerView.leadingAnchor.constraint(equalTo: alert.view.leadingAnchor, constant: 0),
-            pickerView.trailingAnchor.constraint(equalTo: alert.view.trailingAnchor, constant: 0),
-            pickerView.topAnchor.constraint(equalTo: alert.view.topAnchor),
-            pickerView.bottomAnchor.constraint(equalTo: alert.view.bottomAnchor, constant: -44),
-        ]
-        NSLayoutConstraint.activate(constraints)
-        
-        // Select the first reward by default.
-        pickerView.selectRow(0, inComponent: 0, animated: false)
-        self.pickerView(pickerView, didSelectRow: 0, inComponent: 0)
         
         // Present the alert
         delegate?.adPresentationViewController?.present(alert, animated: true, completion: nil)
@@ -242,6 +217,11 @@ class RewardedAdDataSource: NSObject, AdDataSource {
     // MARK: - Ad Loading
     
     private func loadAd() {
+        guard !isAdLoading else {
+            return
+        }
+        
+        isAdLoading = true
         clearStatus { [weak self] in
             self?.delegate?.adPresentationTableView.reloadData()
         }
@@ -313,6 +293,7 @@ extension RewardedAdDataSource: MPRewardedVideoDelegate {
     // MARK: - MPRewardedVideoDelegate
     
     func rewardedVideoAdDidLoad(forAdUnitID adUnitID: String!) {
+        isAdLoading = false
         setStatus(for: .didLoad) { [weak self] in
             if let strongSelf = self {
                 strongSelf.loadFailureReason = nil
@@ -323,6 +304,7 @@ extension RewardedAdDataSource: MPRewardedVideoDelegate {
     }
     
     func rewardedVideoAdDidFailToLoad(forAdUnitID adUnitID: String!, error: Error!) {
+        isAdLoading = false
         setStatus(for: .didFailToLoad) { [weak self] in
             if let strongSelf = self {
                 strongSelf.loadFailureReason = error.localizedDescription
