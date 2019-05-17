@@ -8,7 +8,7 @@
 
 import UIKit
 
-class AdActionsTableViewCell: UITableViewCell {
+final class AdActionsTableViewCell: UITableViewCell, TableViewCellRegisterable {
     // MARK: - IBOutlets
     @IBOutlet weak var stackView: UIStackView!
     @IBOutlet weak var showAdButton: RoundedButton!
@@ -52,9 +52,4 @@ class AdActionsTableViewCell: UITableViewCell {
         showAdButton.isHidden = (showAdHandler == nil)
         showAdButton.isEnabled = showButtonEnabled
     }
-}
-
-extension AdActionsTableViewCell: TableViewCellRegisterable {
-    // MARK: - TableViewCellRegisterable
-    static private(set) var reuseId: String = "AdActionsTableViewCell"
 }

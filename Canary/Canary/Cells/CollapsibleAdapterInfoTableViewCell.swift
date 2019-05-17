@@ -9,7 +9,7 @@
 import MoPub
 import UIKit
 
-class CollapsibleAdapterInfoTableViewCell: UITableViewCell {
+final class CollapsibleAdapterInfoTableViewCell: UITableViewCell, TableViewCellRegisterable {
     // MARK: - Constants
     struct Constants {
         // The padding and spacing constant for the stack view elements

@@ -20,7 +20,6 @@
 #import "MPNativeAdConstants.h"
 #import "MPTimer.h"
 #import "MPNativeAdRenderer.h"
-#import "MPNativeAdDelegate.h"
 #import "MPNativeView.h"
 #import "MPHTTPNetworkSession.h"
 #import "MPURLRequest.h"
@@ -30,6 +29,7 @@
 @interface MPNativeAd () <MPNativeAdAdapterDelegate, MPNativeViewDelegate>
 
 @property (nonatomic, readwrite, strong) id<MPNativeAdRenderer> renderer;
+@property (nonatomic, readwrite, strong) MPAdConfiguration *configuration;
 
 @property (nonatomic, strong) NSDate *creationDate;
 
@@ -125,6 +125,10 @@
     MPLogDebug(@"Tracking an impression for %@.", self.adIdentifier);
     self.hasTrackedImpression = YES;
     [self trackMetricsForURLs:self.impressionTrackerURLs];
+
+    if ([self.delegate respondsToSelector:@selector(mopubAd:didTrackImpressionWithImpressionData:)]) {
+        [self.delegate mopubAd:self didTrackImpressionWithImpressionData:self.configuration.impressionData];
+    }
 }
 
 - (void)trackClick

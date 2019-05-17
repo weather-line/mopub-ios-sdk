@@ -174,6 +174,12 @@
     }
 }
 
+- (void)interstitialAdManager:(MPInterstitialAdManager *)manager didReceiveImpressionEventWithImpressionData:(MPImpressionData *)impressionData {
+    if ([self.delegate respondsToSelector:@selector(mopubAd:didTrackImpressionWithImpressionData:)]) {
+        [self.delegate mopubAd:self didTrackImpressionWithImpressionData:impressionData];
+    }
+}
+
 + (NSMutableArray *)sharedInterstitialAdControllers
 {
     return [NSMutableArray arrayWithArray:[[self class] sharedInterstitials].allValues];

@@ -548,4 +548,81 @@ static const NSTimeInterval kTestTimeout   = 2; // seconds
     XCTAssertTrue(customEvent.isLocalExtrasAvailableAtRequest);
 }
 
+#pragma mark - Impression Level Revenue Data
+
+- (void)testImpressionDelegateFiresWithoutILRD {
+    XCTestExpectation * expectation = [self expectationWithDescription:@"Wait for impression delegate"];
+
+    MPRewardedVideoDelegateHandler * handler = [MPRewardedVideoDelegateHandler new];
+    handler.didReceiveImpression = ^(MPImpressionData * impressionData) {
+        [expectation fulfill];
+
+        XCTAssertNil(impressionData);
+    };
+
+    // Generate the ad configurations
+    MPAdConfiguration * rewardedVideoThatShouldLoad = [MPAdConfigurationFactory defaultRewardedVideoConfigurationWithCustomEventClassName:@"MPMockRewardedVideoCustomEvent"];
+    NSArray * configurations = @[rewardedVideoThatShouldLoad];
+
+    MPRewardedVideoAdManager * manager = [[MPRewardedVideoAdManager alloc] initWithAdUnitID:kTestAdUnitId delegate:handler];
+    MPMockAdServerCommunicator * communicator = [[MPMockAdServerCommunicator alloc] initWithDelegate:manager];
+    communicator.mockConfigurationsResponse = configurations;
+    manager.communicator = communicator;
+
+    handler.didLoadAd = ^{
+        // Track impression
+        MPRewardedVideoAdapter * adapter = (MPRewardedVideoAdapter *)manager.adapter;
+        [adapter trackImpression];
+    };
+
+    MPAdTargeting * targeting = [[MPAdTargeting alloc] init];
+    [manager loadRewardedVideoAdWithCustomerId:@"CUSTOMER_ID" targeting:targeting];
+
+    [self waitForExpectationsWithTimeout:kTestTimeout handler:^(NSError * _Nullable error) {
+        if (error != nil) {
+            XCTFail(@"Timed out");
+        }
+    }];
+}
+
+- (void)testImpressionDelegateFiresWithILRD {
+    XCTestExpectation * expectation = [self expectationWithDescription:@"Wait for impression delegate"];
+    NSString * testAdUnitID = @"TEST_ADUNIT_ID";
+
+    MPRewardedVideoDelegateHandler * handler = [MPRewardedVideoDelegateHandler new];
+    handler.didReceiveImpression = ^(MPImpressionData * impressionData) {
+        [expectation fulfill];
+
+        XCTAssertNotNil(impressionData);
+        XCTAssert([impressionData.adUnitID isEqualToString:testAdUnitID]);
+    };
+
+    // Generate the ad configurations
+    MPAdConfiguration * rewardedVideoThatShouldLoad = [MPAdConfigurationFactory defaultRewardedVideoConfigurationWithCustomEventClassName:@"MPMockRewardedVideoCustomEvent"];
+    rewardedVideoThatShouldLoad.impressionData = [[MPImpressionData alloc] initWithDictionary:@{
+                                                                                                kImpressionDataAdUnitIDKey: testAdUnitID
+                                                                                                }];
+    NSArray * configurations = @[rewardedVideoThatShouldLoad];
+
+    MPRewardedVideoAdManager * manager = [[MPRewardedVideoAdManager alloc] initWithAdUnitID:kTestAdUnitId delegate:handler];
+    MPMockAdServerCommunicator * communicator = [[MPMockAdServerCommunicator alloc] initWithDelegate:manager];
+    communicator.mockConfigurationsResponse = configurations;
+    manager.communicator = communicator;
+
+    handler.didLoadAd = ^{
+        // Track impression
+        MPRewardedVideoAdapter * adapter = (MPRewardedVideoAdapter *)manager.adapter;
+        [adapter trackImpression];
+    };
+
+    MPAdTargeting * targeting = [[MPAdTargeting alloc] init];
+    [manager loadRewardedVideoAdWithCustomerId:@"CUSTOMER_ID" targeting:targeting];
+
+    [self waitForExpectationsWithTimeout:kTestTimeout handler:^(NSError * _Nullable error) {
+        if (error != nil) {
+            XCTFail(@"Timed out");
+        }
+    }];
+}
+
 @end

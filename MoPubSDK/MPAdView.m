@@ -150,14 +150,22 @@
     [self setAdContentView:nil];
 }
 
-- (void)managerDidFailToLoadAd
+- (void)managerDidFailToLoadAdWithError:(NSError *)error
 {
     if ([self.delegate respondsToSelector:@selector(adViewDidFailToLoadAd:)]) {
         // make sure we are not released synchronously as objects owned by us
         // may do additional work after this callback
         [[MPCoreInstanceProvider sharedProvider] keepObjectAliveForCurrentRunLoopIteration:self];
-
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
         [self.delegate adViewDidFailToLoadAd:self];
+#pragma GCC diagnostic pop
+    }
+    if ([self.delegate respondsToSelector:@selector(adView:didFailToLoadAdWithError:)]) {
+        // make sure we are not released synchronously as objects owned by us
+        // may do additional work after this callback
+        [[MPCoreInstanceProvider sharedProvider] keepObjectAliveForCurrentRunLoopIteration:self];
+        [self.delegate adView:self didFailToLoadAdWithError:error];
     }
 }
 
@@ -187,6 +195,12 @@
 {
     if ([self.delegate respondsToSelector:@selector(willLeaveApplicationFromAd:)]) {
         [self.delegate willLeaveApplicationFromAd:self];
+    }
+}
+
+- (void)impressionDidFireWithImpressionData:(MPImpressionData *)impressionData {
+    if ([self.delegate respondsToSelector:@selector(mopubAd:didTrackImpressionWithImpressionData:)]) {
+        [self.delegate mopubAd:self didTrackImpressionWithImpressionData:impressionData];
     }
 }
 

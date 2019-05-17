@@ -12,34 +12,32 @@ import MoPub
 class AdapterVersionsMenuDataSource {
     // MARK: - Properties
     
+    private enum Item {
+        /**
+         This cell represents the "no adapters initialized" state.
+         */
+        case noAdapters
+        
+        /**
+         This cell represents an adpater. The associated value of this case is the name of adapter.
+         */
+        case adapter(name: String)
+        
+        /**
+         This cell has a Clear Cached Network toggle.
+         */
+        case clearCachedNetowrksToggle
+    }
+    
     /**
-     Alphabetically sorted adapter names.
+     This `Item` array represents the cells in the table view.
      */
-    private var adapterNames: [String] = []
+    private var items: [Item] = []
     
     /**
      Set of adapter names that are currently in an expanded state.
      */
     private var expandedAdapters: Set<String> = Set<String>()
-    
-    // MARK: - Adapter Cell Retrieval
-    
-    /**
-     Registers and retrieves a reusable instance of a `CollapsibleAdapterInfoTableViewCell`.
-     - Parameter tableView: Table View rendering the cell.
-     - Returns: A reusable `CollapsibleAdapterInfoTableViewCell` instance.
-     */
-    func adapterMenuCell(inTableView tableView: UITableView) -> CollapsibleAdapterInfoTableViewCell {
-        let adapterCellReuseIdentifier: String = "CollapsibleAdapterInfoTableViewCell"
-        
-        var cell = tableView.dequeueReusableCell(withIdentifier: adapterCellReuseIdentifier) as? CollapsibleAdapterInfoTableViewCell
-        if cell == nil {
-            tableView.register(UINib(nibName: adapterCellReuseIdentifier, bundle: nil), forCellReuseIdentifier: adapterCellReuseIdentifier)
-            cell = tableView.dequeueReusableCell(withIdentifier: adapterCellReuseIdentifier) as? CollapsibleAdapterInfoTableViewCell
-        }
-        
-        return cell!
-    }
 }
 
 extension AdapterVersionsMenuDataSource: MenuDisplayable {
@@ -47,8 +45,7 @@ extension AdapterVersionsMenuDataSource: MenuDisplayable {
      Number of menu items available
      */
     var count: Int {
-        // There will always be at least one item.
-        return max(adapterNames.count, 1)
+        return items.count
     }
     
     /**
@@ -65,24 +62,32 @@ extension AdapterVersionsMenuDataSource: MenuDisplayable {
      - Returns: A configured `UITableViewCell`
      */
     func cell(forItem index: Int, inTableView tableView: UITableView) -> UITableViewCell {
-        let cell: CollapsibleAdapterInfoTableViewCell = adapterMenuCell(inTableView: tableView)
-        
-        // There are no adapters initialized.
-        guard adapterNames.count > 0 else {
+        switch items[index] {
+        case .noAdapters:
+            let cell = tableView.dequeueCellFromNib(cellType: CollapsibleAdapterInfoTableViewCell.self)
             cell.titleLabel.text = "No adapters initialized"
             return cell
-        }
-        
-        // There exist some initialized adapters
-        let name: String = adapterNames[index]
-        guard let adapter: MPAdapterConfiguration = MoPub.sharedInstance().adapterConfigurationNamed(name) else {
-            cell.update(title: name)
+            
+        case let .adapter(name):
+            let cell = tableView.dequeueCellFromNib(cellType: CollapsibleAdapterInfoTableViewCell.self)
+            
+            // There exist some initialized adapters
+            guard let adapter: MPAdapterConfiguration = MoPub.sharedInstance().adapterConfigurationNamed(name) else {
+                cell.update(title: name)
+                return cell
+            }
+            
+            let isCollapsed: Bool = !expandedAdapters.contains(name)
+            cell.update(adapterName: name , info: adapter, isCollapsed: isCollapsed)
+            return cell
+            
+        case .clearCachedNetowrksToggle:
+            let cell = tableView.dequeueCellFromNib(cellType: TextAndToggleTableViewCell.self)
+            cell.configure(title: "Clear Cached Networks", toggleIsOn: UserDefaults.standard.shouldClearCachedNetworks) { shouldClearCachedNetworks  in
+                UserDefaults.standard.shouldClearCachedNetworks = shouldClearCachedNetworks
+            }
             return cell
         }
-        
-        let isCollapsed: Bool = !expandedAdapters.contains(name)
-        cell.update(adapterName: name , info: adapter, isCollapsed: isCollapsed)
-        return cell
     }
     
     /**
@@ -93,7 +98,12 @@ extension AdapterVersionsMenuDataSource: MenuDisplayable {
      */
     func canSelect(itemAt index: Int, inTableView tableView: UITableView) -> Bool {
         // Selection is only valid if there are adapters present.
-        return (adapterNames.count > 0)
+        switch items[index] {
+        case .noAdapters, .clearCachedNetowrksToggle:
+            return false
+        case .adapter:
+            return true
+        }
     }
     
     /**
@@ -104,31 +114,47 @@ extension AdapterVersionsMenuDataSource: MenuDisplayable {
      - Returns: `true` if the menu should collapse when selected; `false` otherwise.
      */
     func didSelect(itemAt indexPath: IndexPath, inTableView tableView: UITableView, presentFrom viewController: UIViewController) -> Bool {
-        // Verify that there are adapters present
-        guard adapterNames.count > 0 && indexPath.row < adapterNames.count else {
+        switch items[indexPath.row] {
+        case .noAdapters:
+            return false
+
+        case let .adapter(name):
+            // Toggle the expanded state for the adapter
+            if expandedAdapters.contains(name) {
+                expandedAdapters.remove(name)
+            }
+            else {
+                expandedAdapters.insert(name)
+            }
+            
+            // Notify the table view that it needs to refresh the layout for the selected cell.
+            tableView.beginUpdates()
+            tableView.reloadRows(at: [indexPath], with: .automatic)
+            tableView.endUpdates()
+            return false
+
+        case .clearCachedNetowrksToggle:
             return false
         }
-        
-        // Toggle the expanded state for the adapter
-        let name: String = adapterNames[indexPath.row]
-        if expandedAdapters.contains(name) {
-            expandedAdapters.remove(name)
-        }
-        else {
-            expandedAdapters.insert(name)
-        }
-        
-        // Notify the table view that it needs to refresh the layout for the selected cell.
-        tableView.beginUpdates()
-        tableView.reloadRows(at: [indexPath], with: .automatic)
-        tableView.endUpdates()
-        return false
     }
     
     /**
      Updates the data source if needed.
+     - Returns: `true` update happened; `false` otherwise.
      */
-    func updateIfNeeded() -> Swift.Void {
-        adapterNames = MoPub.sharedInstance().availableAdapterClassNames()?.sorted() ?? []
+    func updateIfNeeded() -> Bool {
+        let previousAdapterNames: [String] = items.compactMap {
+            guard case let .adapter(name) = $0 else {
+                return nil
+            }
+            return name
+        }
+        
+        let currentAdapterNames = MoPub.sharedInstance().availableAdapterClassNames()?.sorted() ?? []
+        var items: [Item] = currentAdapterNames.isEmpty ? [.noAdapters] : currentAdapterNames.map { .adapter(name: $0) }
+        items.append(.clearCachedNetowrksToggle)
+        self.items = items
+        
+        return previousAdapterNames != currentAdapterNames
     }
 }

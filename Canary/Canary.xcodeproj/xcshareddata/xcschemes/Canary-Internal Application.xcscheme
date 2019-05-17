@@ -16,7 +16,7 @@
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "BC33E04A1FBB63260060ECBE"
                BuildableName = "Canary.app"
-               BlueprintName = "Canary (Internal)"
+               BlueprintName = "Internal Application"
                ReferencedContainer = "container:Canary.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -26,15 +26,28 @@
       buildConfiguration = "Debug"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
+      codeCoverageEnabled = "YES"
       shouldUseLaunchSchemeArgsEnv = "YES">
       <Testables>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "YES"
+            testExecutionOrdering = "random">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "EC469C0F22613063006CABAA"
+               BuildableName = "CanaryUnitTests.xctest"
+               BlueprintName = "CanaryUnitTests"
+               ReferencedContainer = "container:Canary.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "BC33E04A1FBB63260060ECBE"
             BuildableName = "Canary.app"
-            BlueprintName = "Canary (Internal)"
+            BlueprintName = "Internal Application"
             ReferencedContainer = "container:Canary.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
@@ -57,7 +70,7 @@
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "BC33E04A1FBB63260060ECBE"
             BuildableName = "Canary.app"
-            BlueprintName = "Canary (Internal)"
+            BlueprintName = "Internal Application"
             ReferencedContainer = "container:Canary.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -76,7 +89,7 @@
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "BC33E04A1FBB63260060ECBE"
             BuildableName = "Canary.app"
-            BlueprintName = "Canary (Internal)"
+            BlueprintName = "Internal Application"
             ReferencedContainer = "container:Canary.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>

@@ -48,7 +48,11 @@ class MenuViewController: UIViewController {
      Updates the data source if needed.
      */
     func updateIfNeeded() {
-        dataSource.updateIfNeeded()
+        if dataSource.updateIfNeeded() {
+            DispatchQueue.main.async {
+                self.tableView.reloadData()
+            }
+        }
     }
 }
 

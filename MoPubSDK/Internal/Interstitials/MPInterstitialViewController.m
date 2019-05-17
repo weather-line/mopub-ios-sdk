@@ -33,13 +33,6 @@ static NSString * const kCloseButtonXImageName = @"MPCloseButtonX.png";
 
 @implementation MPInterstitialViewController
 
-@synthesize closeButton = _closeButton;
-@synthesize closeButtonStyle = _closeButtonStyle;
-@synthesize orientationType = _orientationType;
-@synthesize applicationHasStatusBar = _applicationHasStatusBar;
-@synthesize delegate = _delegate;
-
-
 - (void)viewDidLoad
 {
     [super viewDidLoad];

@@ -32,6 +32,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     // MARK: - UIApplicationDelegate
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        if UserDefaults.standard.shouldClearCachedNetworks {
+            MoPub.sharedInstance().clearCachedNetworks() // do this before initializing the MoPub SDK
+            print("\(#function) cached networks are cleared")
+        }
+        
         // Extract the UI elements for easier manipulation later.
         // Calls to `loadViewIfNeeded()` are needed to load any children view controllers
         // before `viewDidLoad()` occurs.

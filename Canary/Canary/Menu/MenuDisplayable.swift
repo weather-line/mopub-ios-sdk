@@ -46,17 +46,9 @@ protocol MenuDisplayable {
     
     /**
      Updates the data source if needed.
+     - Returns: `true` update happened; `false` otherwise.
      */
-    func updateIfNeeded() -> Swift.Void
-    
-    // MARK: - Menu Cells
-    
-    /**
-     Provides a reusable basic menu cell that can be further customized.
-     - Parameter tableView: `UITableView` to retrieve the cell from
-     - Returns: A `BasicMenuTableViewCell`
-     */
-    func basicMenuCell(inTableView tableView: UITableView) -> BasicMenuTableViewCell
+    func updateIfNeeded() -> Bool
 }
 
 extension MenuDisplayable {
@@ -69,19 +61,7 @@ extension MenuDisplayable {
         return true
     }
     
-    func updateIfNeeded() -> Swift.Void {
-        return
-    }
-    
-    func basicMenuCell(inTableView tableView: UITableView) -> BasicMenuTableViewCell {
-        let basicCellReuseIdentifier: String = "BasicMenuTableViewCell"
-        
-        var cell = tableView.dequeueReusableCell(withIdentifier: basicCellReuseIdentifier) as? BasicMenuTableViewCell
-        if cell == nil {
-            tableView.register(UINib(nibName: basicCellReuseIdentifier, bundle: nil), forCellReuseIdentifier: basicCellReuseIdentifier)
-            cell = tableView.dequeueReusableCell(withIdentifier: basicCellReuseIdentifier) as? BasicMenuTableViewCell
-        }
-        
-        return cell!
+    func updateIfNeeded() -> Bool {
+        return false
     }
 }

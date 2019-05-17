@@ -15,6 +15,7 @@
 @property (nonatomic, readonly) NSDate *creationDate;
 @property (nonatomic) MPNativeView *associatedView;
 @property (nonatomic, readwrite, strong) id<MPNativeAdRenderer> renderer;
+@property (nonatomic, readwrite, strong) MPAdConfiguration *configuration;
 @property (nonatomic, readonly) NSMutableSet *clickTrackerURLs;
 @property (nonatomic, readonly) NSMutableSet *impressionTrackerURLs;
 @property (nonatomic, readonly, strong) id<MPNativeAdAdapter> adAdapter;

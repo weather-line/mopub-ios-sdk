@@ -17,6 +17,7 @@
 @dynamic clickTrackerURLs;
 @dynamic creationDate;
 @dynamic renderer;
+@dynamic configuration;
 @dynamic associatedView;
 @dynamic adAdapter;
 

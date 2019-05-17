@@ -28,7 +28,7 @@
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "BC33E0321FBB627B0060ECBE"
             BuildableName = "Canary.app"
-            BlueprintName = "Canary"
+            BlueprintName = "AppStore Application"
             ReferencedContainer = "container:Canary.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
@@ -51,7 +51,7 @@
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "BC33E0321FBB627B0060ECBE"
             BuildableName = "Canary.app"
-            BlueprintName = "Canary"
+            BlueprintName = "AppStore Application"
             ReferencedContainer = "container:Canary.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -69,7 +69,7 @@
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "BC33E0321FBB627B0060ECBE"
             BuildableName = "Canary.app"
-            BlueprintName = "Canary"
+            BlueprintName = "AppStore Application"
             ReferencedContainer = "container:Canary.xcodeproj">
          </BuildableReference>
       </MacroExpansion>

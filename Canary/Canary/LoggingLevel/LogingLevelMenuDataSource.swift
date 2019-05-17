@@ -49,7 +49,7 @@ extension LogingLevelMenuDataSource: MenuDisplayable {
      - Returns: A configured `UITableViewCell`
      */
     func cell(forItem index: Int, inTableView tableView: UITableView) -> UITableViewCell {
-        let cell: BasicMenuTableViewCell = basicMenuCell(inTableView: tableView)
+        let cell = tableView.dequeueCellFromNib(cellType: BasicMenuTableViewCell.self)
         let item: LoggingLevelMenuOptions = items[index]
         let currentLogLevel: MPBLogLevel = MPLogging.consoleLogLevel
         

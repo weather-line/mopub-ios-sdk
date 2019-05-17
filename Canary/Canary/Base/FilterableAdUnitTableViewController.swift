@@ -46,13 +46,8 @@ class FilterableAdUnitTableViewController: AdUnitTableViewController {
         searchController.searchBar.placeholder = "Filter Ads"
         searchController.searchBar.searchBarStyle = .minimal
         
-        if #available(iOS 11.0, *) {
-            navigationItem.searchController = searchController
-        }
-        else {
-            searchController.hidesNavigationBarDuringPresentation = false
-            navigationItem.titleView = searchController.searchBar
-        }
+        searchController.hidesNavigationBarDuringPresentation = false
+        navigationItem.titleView = searchController.searchBar
         
         // Definte presentation context so that the search bar does not remain
         // on the screen if the user navigates to another view controller

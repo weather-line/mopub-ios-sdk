@@ -30,6 +30,7 @@ class MenuDataSource {
     init() {
         add(menu: AdapterVersionsMenuDataSource())
         add(menu: LogingLevelMenuDataSource())
+        add(menu: NativeAdRendererMenuDataSource())
     }
     
     // MARK: - Data Source
@@ -49,9 +50,10 @@ class MenuDataSource {
     
     /**
      Updates all data sources if needed.
+     - Returns: `true` update happened; `false` otherwise.
      */
-    func updateIfNeeded() {
-        sources.values.forEach({ $0.updateIfNeeded() })
+    func updateIfNeeded() -> Bool {
+        return sources.values.reduce(false) { $0 || $1.updateIfNeeded() }
     }
     
     // MARK: - Accessors
