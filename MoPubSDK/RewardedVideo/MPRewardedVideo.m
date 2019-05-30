@@ -8,11 +8,13 @@
 
 #import "MPRewardedVideo.h"
 #import "MPAdTargeting.h"
+#import "MPImpressionTrackedNotification.h"
 #import "MPLogging.h"
 #import "MPRewardedVideoAdManager.h"
 #import "MPRewardedVideoError.h"
 #import "MPRewardedVideoConnection.h"
 #import "MPRewardedVideoCustomEvent.h"
+#import "MoPub+Utility.h"
 
 static MPRewardedVideo *gSharedInstance = nil;
 
@@ -283,6 +285,10 @@ static MPRewardedVideo *gSharedInstance = nil;
 
 - (void)rewardedVideoAdManager:(MPRewardedVideoAdManager *)manager didReceiveImpressionEventWithImpressionData:(MPImpressionData *)impressionData
 {
+    [MoPub sendImpressionNotificationFromAd:nil
+                                   adUnitID:manager.adUnitID
+                             impressionData:impressionData];
+
     id<MPRewardedVideoDelegate> delegate = [self.delegateTable objectForKey:manager.adUnitID];
     if ([delegate respondsToSelector:@selector(didTrackImpressionWithAdUnitID:impressionData:)]) {
         [delegate didTrackImpressionWithAdUnitID:manager.adUnitID impressionData:impressionData];
